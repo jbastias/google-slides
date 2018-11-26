@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link
+      rel="stylesheet"
+      href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.2/css/bootstrap.min.css"
+    />
+    <title>How to set up React, Webpack, and Babel</title>
+    <script async defer src="https://apis.google.com/js/api.js"></script>
+  </head>
+  <body>
+    <div class="container-fluid">
+      <div class="row mt-5">
+        <div class="col"><div id="app" witdh="100%"></div></div>
+      </div>
+    </div>
+    <script type="text/javascript">
+      const PRES_OBJ = {
+        slides: 0,
+      };
+
+      const PRES_ID = '1wtG0Wvt_p7Qrziu-D1LODmB1irORHiHo4UxGR3q2Dfg';
+
+      // Client ID and API key from the Developer Console
+      // var CLIENT_ID = '880854116754-rjmu721vn01trtnmccukdbbjfl1pfg6o.apps.googleusercontent.com';
+      // var API_KEY = 'AIzaSyCogCojZ_4Lhl32fDNXg0CkcRTDZWZTQF0';
+
+      var CLIENT_ID =
+        '518764764249-m8bmduuaffs8643sjiicj38kksl62knj.apps.googleusercontent.com';
+      var API_KEY = 'AIzaSyAxBroVxdO7NeQ6kubN94XCl0t4O9meQpA';
+
+      // Array of API discovery doc URLs for APIs used by the quickstart
+      var DISCOVERY_DOCS = [
+        'https://slides.googleapis.com/$discovery/rest?version=v1',
+      ];
+
+      // Authorization scopes required by the API; multiple scopes can be
+      // included, separated by spaces.
+      var SCOPES = 'https://www.googleapis.com/auth/presentations';
+
+      /**
+       *  On load, called to load the auth2 library and API client library.
+       */
+      function handleClientLoad() {
+        gapi.load('client:auth2', initClient);
+      }
+
+      /**
+       *  Initializes the API client library and sets up sign-in state
+       *  listeners.
+       */
+      function initClient() {
+        gapi.client
+          .init({
+            apiKey: API_KEY,
+            clientId: CLIENT_ID,
+            discoveryDocs: DISCOVERY_DOCS,
+            scope: SCOPES,
+          })
+          .then(
+            function() {
+              // Listen for sign-in state changes.
+              gapi.auth2
+                .getAuthInstance()
+                .isSignedIn.listen(updateSigninStatus);
+            },
+            function(error) {
+              console.log(JSON.stringify(error, null, 2));
+            }
+          );
+      }
+
+      /**
+       *  Called when the signed in status changes, to update the UI
+       *  appropriately. After a sign-in, the API is called.
+       */
+      function updateSigninStatus(isSignedIn) {
+        if (isSignedIn) {
+          localStorage.setItem('connected', 'true');
+        } else {
+          localStorage.setItem('connected', 'false');
+        }
+      }
+    </script>
+
+    <script
+      async
+      defer
+      src="https://apis.google.com/js/api.js"
+      onload="this.onload=function(){};handleClientLoad()"
+      onreadystatechange="if (this.readyState === 'complete') this.onload()"
+    ></script>
+  </body>
+</html>
