@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React from 'react';
 import { Button } from 'reactstrap';
 
 const TheNav = props => (
@@ -55,6 +55,14 @@ const TheNav = props => (
           className="m-1"
         >
           Move Shape
+        </Button>
+        <Button
+          onClick={props.handleDialog}
+          color="success"
+          size="sm"
+          className="m-1"
+        >
+          Dialog
         </Button>
       </>
     )}

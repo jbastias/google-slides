@@ -1,6 +1,6 @@
 const PRES_ID = '1wtG0Wvt_p7Qrziu-D1LODmB1irORHiHo4UxGR3q2Dfg';
 
-export function GetMoveStuff(presentation, cb) {
+export function MoveStuff(presentation, cb) {
   const slides = presentation.slides;
   const slide = slides[slides.length - 1];
   const shape = slide.pageElements[0];
@@ -31,7 +31,47 @@ export function GetMoveStuff(presentation, cb) {
       requests: requests,
     })
     .then(createSlideResponse => {
-      console.log(JSON.stringify(createSlideResponse, null, 2));
+      // console.log(JSON.stringify(createSlideResponse, null, 2));
+      console.log(
+        `Move slide shape revision id: ${
+          createSlideResponse.result.writeControl.requiredRevisionId
+        }`
+      );
+      cb(createSlideResponse.result);
+    });
+}
+
+export function MoveObject(presentationId, objectId, transform, cb) {
+  // console.log('', presentationId);
+  // console.log('', objectId);
+  // console.log(JSON.stringify(transform, null, 2));
+
+  delete transform.type;
+  // delete transform.width;
+  // delete transform.height;
+  // transform['shearX'] = 0;
+  // transform['shearY'] = 0;
+
+  const requests = [
+    {
+      updatePageElementTransform: {
+        objectId: objectId,
+        transform,
+        applyMode: 'ABSOLUTE',
+      },
+    },
+  ];
+
+  // console.log('new shit: ', requests);
+
+  // // Execute the request.
+  gapi.client.slides.presentations
+    .batchUpdate({
+      presentationId: presentationId,
+      requests: requests,
+    })
+    .then(createSlideResponse => {
+      // console.log(JSON.stringify(createSlideResponse, null, 2));
       console.log(
         `Move slide shape revision id: ${
           createSlideResponse.result.writeControl.requiredRevisionId
@@ -47,34 +87,53 @@ export function GetShapes(presentation) {
   slides.forEach(s => {
     // console.log(s.objectId);
     const slideInfo = [];
-    s.pageElements.forEach(o => {
-      // console.log(`  ${JSON.stringify(o)}`);
-      const info = {};
-      Object.keys(o).forEach(key => {
-        if (key === 'objectId') {
-          info['objetctId'] = o[key];
-        }
 
-        if (key === 'shape') {
-          info['shapeType'] = o[key].shapeType;
-        }
+    s.pageElements &&
+      s.pageElements.forEach(o => {
+        // console.log(`  ${JSON.stringify(o, null, 2)}`);
+        const info = {};
+        Object.keys(o).forEach(key => {
+          if (key === 'objectId') {
+            info['objetctId'] = o[key];
+          }
 
-        if (key === 'transform') {
-          Object.keys(o[key]).forEach(k => {
-            info[k] = o.transform[k];
-          });
-        }
+          if (key === 'shape') {
+            info['type'] = o[key].shapeType;
+          }
+
+          if (
+            key === 'video' ||
+            key === 'image' ||
+            key === 'table' ||
+            key === 'sheetsChart' ||
+            key === 'line'
+          ) {
+            info['type'] = key;
+          }
+
+          if (key === 'transform') {
+            Object.keys(o[key]).forEach(k => {
+              info[k] = `${o.transform[k]}`;
+            });
+          }
+
+          if (key === 'size') {
+            Object.keys(o[key]).forEach(k => {
+              const { magnitude, unit } = o.size[k];
+              info[k] = `${magnitude} - ${unit}`;
+            });
+          }
+        });
+
+        slideInfo.push(info);
       });
-
-      slideInfo.push(info);
-    });
     console.table(slideInfo);
   });
 }
 
 export function createObjectId() {
   const id = `obj-${Math.floor(Math.random() * 10000000000).toString()}`;
-  console.log(id);
+  // console.log(id);
   return id;
 }
 
