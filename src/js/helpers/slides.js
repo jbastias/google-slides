@@ -44,9 +44,12 @@ export function MoveStuff(presentation, cb) {
 export function MoveObject(presentationId, objectId, transform, cb) {
   // console.log('', presentationId);
   // console.log('', objectId);
-  // console.log(JSON.stringify(transform, null, 2));
 
-  delete transform.type;
+  transform['unit'] = 'EMU';
+
+  console.log(JSON.stringify(transform, null, 2));
+
+  // delete transform.type;
   // delete transform.width;
   // delete transform.height;
   // transform['shearX'] = 0;

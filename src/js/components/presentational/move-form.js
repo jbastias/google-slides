@@ -54,12 +54,22 @@ export const getElementInfo = element => {
     unit: element.size.width.unit,
     // width: element.size.width.magnitude,
     // height: element.size.height.magnitude,
-    scaleX: element.transform.scaleX,
-    scaleY: element.transform.scaleY,
-    shearX: element.transform.shearX,
-    shearY: element.transform.shearY,
-    translateX: element.transform.translateX,
-    translateY: element.transform.translateY,
+    data: {
+      scaleX: element.transform.scaleX || 0,
+      scaleY: element.transform.scaleY || 0,
+      shearX: element.transform.shearX || 0,
+      shearY: element.transform.shearY || 0,
+      translateX: element.transform.translateX || 0,
+      translateY: element.transform.translateY || 0,
+    },
+    UI: {
+      scaleX: element.transform.scaleX || 0,
+      scaleY: element.transform.scaleY || 0,
+      shearX: element.transform.shearX || 0,
+      shearY: element.transform.shearY || 0,
+      translateX: element.transform.translateX || 0,
+      translateY: element.transform.translateY || 0,
+    },
   };
 };
 
@@ -72,40 +82,41 @@ const showElement = ({ slideId, elementId, elementInfo, handleMove }) => {
           <span className="text-primary">{slideId}</span>
         </Col>
         <Col>
-          <span className="font-weight-bold">ElId: </span>
+          <span className="font-weight-bold">ElementId: </span>
           <span className="text-primary">{elementId}</span>
         </Col>
       </Row>
 
       <Row>
-        <Col>Element</Col>
+        <Col>Element Type</Col>
         <Col>
           <Input
             type="text"
             name="unit"
             id="unit"
             readOnly
-            defaultValue={elementInfo.type}
+            value={elementInfo.type}
           />
         </Col>
       </Row>
       <Row>
         <Col>Unit</Col>
         <Col>
-          <Input
+          {/* <Input
             type="text"
             name="unit"
             id="unit"
             defaultValue={elementInfo.unit}
-          />
+          /> */}
 
-          {/* <Input readOnly type="select" name="unit" id="unit">
-              <option defaultValue="EMU" value="EMU">
-                EMU
-              </option>
-              <option value="PT">PT</option>
-              <option value="PX">PX</option>
-            </Input> */}
+          <Input onChange={handleMove} type="select" name="unit" id="unit">
+            <option value="EMU">EMU</option>
+            <option value="PT">PT</option>
+            <option value="PX">PX</option>
+            <option value="CM">CM</option>
+            <option value="IN">IN</option>
+            <option value="FRACTION">FRACTION</option>
+          </Input>
         </Col>
       </Row>
       {/* <Row>
@@ -138,7 +149,7 @@ const showElement = ({ slideId, elementId, elementInfo, handleMove }) => {
             type="text"
             name="scaleX"
             id="scaleX"
-            defaultValue={elementInfo.scaleX || 0}
+            value={elementInfo.UI.scaleX || 0}
             onChange={handleMove}
           />
         </Col>
@@ -151,7 +162,7 @@ const showElement = ({ slideId, elementId, elementInfo, handleMove }) => {
             type="text"
             name="scaleY"
             id="scaleY"
-            defaultValue={elementInfo.scaleY || 0}
+            value={elementInfo.UI.scaleY || 0}
             onChange={handleMove}
           />
         </Col>
@@ -164,7 +175,7 @@ const showElement = ({ slideId, elementId, elementInfo, handleMove }) => {
             type="text"
             name="translateX"
             id="translateX"
-            defaultValue={elementInfo.translateX || 0}
+            value={elementInfo.UI.translateX || 0}
             onChange={handleMove}
           />
         </Col>
@@ -177,7 +188,7 @@ const showElement = ({ slideId, elementId, elementInfo, handleMove }) => {
             type="text"
             name="translateY"
             id="translateY"
-            defaultValue={elementInfo.translateY || 0}
+            value={elementInfo.UI.translateY || 0}
             onChange={handleMove}
           />
         </Col>
@@ -190,7 +201,7 @@ const showElement = ({ slideId, elementId, elementInfo, handleMove }) => {
             type="text"
             name="shearX"
             id="shearX"
-            defaultValue={elementInfo.shearX || 0}
+            value={elementInfo.UI.shearX || 0}
             onChange={handleMove}
           />
         </Col>
@@ -203,7 +214,7 @@ const showElement = ({ slideId, elementId, elementInfo, handleMove }) => {
             type="text"
             name="shearY"
             id="shearY"
-            defaultValue={elementInfo.shearY || 0}
+            value={elementInfo.UI.shearY || 0}
             onChange={handleMove}
           />
         </Col>

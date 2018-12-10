@@ -16,6 +16,79 @@ import {
   MoveObject,
 } from '../../helpers/slides';
 
+const unitsTable = {
+  CM_EMU: 1 / 360000,
+  IN_EMU: 1 / 914400,
+  PT_EMU: 1 / 12700,
+  PX_EMU: 1 / 9525,
+  EMU: 1,
+  EMU_CM: 360000,
+  EMU_IN: 914400,
+  EMU_PT: 12700,
+  EMU_PX: 9525,
+};
+
+const getUnit = (unit, value) => {
+  // console.log(`${unit}_EMU`, value);
+  return value / unitsTable[`${unit}_EMU`];
+};
+
+const getUnitUI = (unit, value) => {
+  // console.log(`${unit}_EMU`, value);
+  return value * unitsTable[`${unit}_EMU`];
+};
+
+const translateUIUnits = element => {
+  console.log(element.oldunit, element.unit);
+
+  element.UI.translateX = getUnitUI(element.unit, element.UI.translateX);
+  element.UI.translateY = getUnitUI(element.unit, element.UI.translateY);
+
+  // console.log('BEFORE: ', JSON.stringify(element, null, 2));
+
+  // if (element.unit === 'EMU') {
+  //   element.data = element.UI;
+  // } else if (element.unit === 'FRACTION') {
+  //   console.log('booo son');
+  // } else {
+  //   console.log(element.unit);
+  //   console.log(element.UI.translateX);
+  //   console.log(element.UI.translateY);
+  //   element.data.translateX = getUnit(element.unit, element.UI.translateX);
+  //   element.data.translateY = getUnit(element.unit, element.UI.translateY);
+  // }
+
+  // // element.translateX = getUnit(unit, element.translateX);
+  // // element.translateY = getUnit(unit, element.translateY);
+
+  // console.log('AFTER: ', JSON.stringify(element, null, 2));
+
+  // this.setState({ element });
+};
+
+const translateUnits = element => {
+  console.log('BEFORE: ', JSON.stringify(element, null, 2));
+
+  if (element.unit === 'EMU') {
+    element.data = element.UI;
+  } else if (element.unit === 'FRACTION') {
+    console.log('booo son');
+  } else {
+    console.log(element.unit);
+    console.log(element.UI.translateX);
+    console.log(element.UI.translateY);
+    element.data.translateX = getUnit(element.unit, element.UI.translateX);
+    element.data.translateY = getUnit(element.unit, element.UI.translateY);
+  }
+
+  // element.translateX = getUnit(unit, element.translateX);
+  // element.translateY = getUnit(unit, element.translateY);
+
+  console.log('AFTER: ', JSON.stringify(element, null, 2));
+
+  // this.setState({ element });
+};
+
 class Main extends Component {
   constructor() {
     super();
@@ -50,7 +123,21 @@ class Main extends Component {
     // console.log('hello', ev.target.value, ev.target.name);
     // console.log('BEFORE state: ', JSON.stringify(this.state.element, null, 2));
     const element = this.state.element;
-    element[ev.target.name] = Number(ev.target.value);
+
+    // console.log(element.unit);
+
+    // console.log(ev.target.name, ev.target.value);
+    if (ev.target.name === 'unit') {
+      element['oldunit'] = element.unit || 'EMU';
+      element[ev.target.name] = ev.target.value;
+      translateUIUnits(element);
+    } else {
+      element.UI[ev.target.name] = Number(ev.target.value);
+    }
+
+    // console.log(element.unit);
+    // translateUnits(element.unit, element);
+
     this.setState({ element });
     // console.log('AFTER state: ', JSON.stringify(this.state.element, null, 2));
   }
@@ -84,7 +171,8 @@ class Main extends Component {
     // console.log('slide: ', slide);
     // console.log('this.state.elementId: ', this.state.elementId);
     const element = getElement(slide, el);
-    // console.log('element: ', element);
+    console.log('element: ', element);
+
     const elementInfo = getElementInfo(element);
 
     // console.log(elementInfo);
@@ -105,10 +193,13 @@ class Main extends Component {
 
   handleDialogMove() {
     // alert('booo');
+
+    translateUnits(this.state.element);
+
     MoveObject(
       this.state.presentation.presentationId,
       this.state.elementId,
-      this.state.element,
+      this.state.element.data,
       res => {
         // console.log(JSON.stringify(res, null, 2));
 
