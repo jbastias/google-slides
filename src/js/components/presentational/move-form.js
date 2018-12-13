@@ -1,19 +1,9 @@
 import React from 'react';
-import {
-  Button,
-  Form,
-  FormGroup,
-  Label,
-  Input,
-  FormText,
-  Row,
-  Col,
-} from 'reactstrap';
+import { Form, FormGroup, Label, Input, Row, Col } from 'reactstrap';
 
 const elements = ({ slideId, presentation }) => {
   if (!slideId) null;
   const s = presentation.slides.filter(s => {
-    // console.log(s.objectId, slide, s.objectId === slide);
     return s.objectId === slideId;
   })[0];
 
@@ -30,16 +20,12 @@ export const getSlide = (presentation, slideId) =>
   presentation.slides.filter(slide => slide.objectId === slideId)[0];
 
 export const getElement = (slide, elementId) => {
-  // console.log(elementId);
-
   return !slide.pageElements
     ? null
     : slide.pageElements.filter(obj => obj.objectId === elementId)[0];
 };
 
 export const getElementInfo = element => {
-  // console.log(JSON.stringify(element));
-
   let type = 'DEFAULT_TYPE';
   const keys = Object.keys(element);
   if (keys.includes('shape')) type = element.shape.shapeType;
@@ -49,11 +35,11 @@ export const getElementInfo = element => {
   if (keys.includes('sheetChart')) type = 'sheetChart';
   if (keys.includes('line')) type = 'line';
 
+  console.log(JSON.stringify(element, null, 2));
+
   return {
     type,
-    unit: element.size.width.unit,
-    // width: element.size.width.magnitude,
-    // height: element.size.height.magnitude,
+    unit: element.transform.unit,
     data: {
       scaleX: element.transform.scaleX || 0,
       scaleY: element.transform.scaleY || 0,
@@ -102,13 +88,6 @@ const showElement = ({ slideId, elementId, elementInfo, handleMove }) => {
       <Row>
         <Col>Unit</Col>
         <Col>
-          {/* <Input
-            type="text"
-            name="unit"
-            id="unit"
-            defaultValue={elementInfo.unit}
-          /> */}
-
           <Input onChange={handleMove} type="select" name="unit" id="unit">
             <option value="EMU">EMU</option>
             <option value="PT">PT</option>
@@ -119,29 +98,6 @@ const showElement = ({ slideId, elementId, elementInfo, handleMove }) => {
           </Input>
         </Col>
       </Row>
-      {/* <Row>
-        <Col>Width</Col>
-        <Col>
-          <Input
-            type="text"
-            name="width"
-            id="width"
-            defaultValue={elementInfo.width || 0}
-          />
-        </Col>
-      </Row>
-      <Row>
-        <Col>Height</Col>
-        <Col>
-          <Input
-            type="text"
-            name="height"
-            id="height"
-            defaultValue={elementInfo.height || 0}
-          />
-        </Col>
-      </Row> */}
-
       <Row>
         <Col>ScaleX</Col>
         <Col>
@@ -154,7 +110,6 @@ const showElement = ({ slideId, elementId, elementInfo, handleMove }) => {
           />
         </Col>
       </Row>
-
       <Row>
         <Col>ScaleY</Col>
         <Col>
@@ -167,7 +122,6 @@ const showElement = ({ slideId, elementId, elementInfo, handleMove }) => {
           />
         </Col>
       </Row>
-
       <Row>
         <Col>TranslateX</Col>
         <Col>
@@ -180,7 +134,6 @@ const showElement = ({ slideId, elementId, elementInfo, handleMove }) => {
           />
         </Col>
       </Row>
-
       <Row>
         <Col>TranslateY</Col>
         <Col>
@@ -193,7 +146,6 @@ const showElement = ({ slideId, elementId, elementInfo, handleMove }) => {
           />
         </Col>
       </Row>
-
       <Row>
         <Col>ShearX</Col>
         <Col>
@@ -206,7 +158,6 @@ const showElement = ({ slideId, elementId, elementInfo, handleMove }) => {
           />
         </Col>
       </Row>
-
       <Row>
         <Col>ShearY</Col>
         <Col>

@@ -1,60 +1,7 @@
 const PRES_ID = '1wtG0Wvt_p7Qrziu-D1LODmB1irORHiHo4UxGR3q2Dfg';
 
-export function MoveStuff(presentation, cb) {
-  const slides = presentation.slides;
-  const slide = slides[slides.length - 1];
-  const shape = slide.pageElements[0];
-  // console.log(shape.transform.scaleX);
-  // console.log(shape.transform.scaleY);
-  const requests = [
-    {
-      updatePageElementTransform: {
-        objectId: shape.objectId,
-        transform: {
-          scaleX: shape.transform.scaleX,
-          scaleY: shape.transform.scaleY,
-          shearX: 0,
-          shearY: 0,
-          translateX: 2540000,
-          translateY: 0,
-          unit: 'EMU',
-        },
-        applyMode: 'ABSOLUTE',
-      },
-    },
-  ];
-
-  // Execute the request.
-  gapi.client.slides.presentations
-    .batchUpdate({
-      presentationId: PRES_ID,
-      requests: requests,
-    })
-    .then(createSlideResponse => {
-      // console.log(JSON.stringify(createSlideResponse, null, 2));
-      console.log(
-        `Move slide shape revision id: ${
-          createSlideResponse.result.writeControl.requiredRevisionId
-        }`
-      );
-      cb(createSlideResponse.result);
-    });
-}
-
 export function MoveObject(presentationId, objectId, transform, cb) {
-  // console.log('', presentationId);
-  // console.log('', objectId);
-
   transform['unit'] = 'EMU';
-
-  console.log(JSON.stringify(transform, null, 2));
-
-  // delete transform.type;
-  // delete transform.width;
-  // delete transform.height;
-  // transform['shearX'] = 0;
-  // transform['shearY'] = 0;
-
   const requests = [
     {
       updatePageElementTransform: {
@@ -65,16 +12,12 @@ export function MoveObject(presentationId, objectId, transform, cb) {
     },
   ];
 
-  // console.log('new shit: ', requests);
-
-  // // Execute the request.
   gapi.client.slides.presentations
     .batchUpdate({
       presentationId: presentationId,
       requests: requests,
     })
     .then(createSlideResponse => {
-      // console.log(JSON.stringify(createSlideResponse, null, 2));
       console.log(
         `Move slide shape revision id: ${
           createSlideResponse.result.writeControl.requiredRevisionId
@@ -84,16 +27,13 @@ export function MoveObject(presentationId, objectId, transform, cb) {
     });
 }
 
-export function GetShapes(presentation) {
-  // console.log(JSON.stringify(presentation, null, 2));
+export function GetInfo(presentation) {
   const slides = presentation.slides;
   slides.forEach(s => {
-    // console.log(s.objectId);
     const slideInfo = [];
 
     s.pageElements &&
       s.pageElements.forEach(o => {
-        // console.log(`  ${JSON.stringify(o, null, 2)}`);
         const info = {};
         Object.keys(o).forEach(key => {
           if (key === 'objectId') {
@@ -136,7 +76,6 @@ export function GetShapes(presentation) {
 
 export function createObjectId() {
   const id = `obj-${Math.floor(Math.random() * 10000000000).toString()}`;
-  // console.log(id);
   return id;
 }
 
@@ -190,7 +129,6 @@ export function createShape(
   return {
     createShape: {
       objectId: createObjectId(),
-      // shapeType: 'RECTANGLE',
       shapeType: type,
       elementProperties: {
         pageObjectId: pageId,
@@ -211,7 +149,6 @@ export function RefreshSlides(cb) {
         var presentation = response.result;
         var length = presentation.slides.length;
         PRES_OBJ.slides = length;
-        // console.log(presentation);
         cb(presentation);
       },
       function(response) {
@@ -230,10 +167,6 @@ export function CreateSlide(cb) {
     createShape(pageId, createSize(100), createTransform(1, 1, 100, 100)),
     createShape(pageId, createSize(50), createTransform(1, 1, 200, 200)),
     createShape(pageId, createSize(150), createTransform(1, 1, 250, 250)),
-    // createShape(pageId, createSize(10)),
-    // createShape(pageId, createSize(100), createTransform(1, 1, 100, 100)),
-    // createShape(pageId, createSize(100), createTransform(1, 1, 200, 200)),
-    // createShape(pageId, createSize(100), createTransform(1, 1, 300, 300)),
   ];
 
   // Execute the request.

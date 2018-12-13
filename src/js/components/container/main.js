@@ -11,82 +11,79 @@ import MoveForm, {
 import {
   CreateSlide,
   RefreshSlides,
-  GetShapes,
-  MoveStuff,
+  GetInfo,
   MoveObject,
 } from '../../helpers/slides';
 
-const unitsTable = {
-  CM_EMU: 1 / 360000,
-  IN_EMU: 1 / 914400,
-  PT_EMU: 1 / 12700,
-  PX_EMU: 1 / 9525,
-  EMU: 1,
-  EMU_CM: 360000,
-  EMU_IN: 914400,
-  EMU_PT: 12700,
-  EMU_PX: 9525,
+const getUnitsTable = presentation => {
+  const width = presentation.pageSize.width.magnitude;
+  const height = presentation.pageSize.height.magnitude;
+  return {
+    CM: 1 / 360000,
+    IN: 1 / 914400,
+    PT: 1 / 12700,
+    PX: 1 / 9525,
+    FRACTION: { x: 1 / width, y: 1 / height },
+    EMU: 1,
+  };
 };
 
-const getUnit = (unit, value) => {
-  // console.log(`${unit}_EMU`, value);
-  return value / unitsTable[`${unit}_EMU`];
+const toDataUnit = (unitsTbl, unit, value, direction) => {
+  if (unit === 'FRACTION') {
+    return value / unitsTbl[`${unit}`][`${direction}`];
+  } else {
+    return value / unitsTbl[unit];
+  }
 };
 
-const getUnitUI = (unit, value) => {
-  // console.log(`${unit}_EMU`, value);
-  return value * unitsTable[`${unit}_EMU`];
+const toUIUnit = (unitsTbl, unit, value, direction) => {
+  if (unit === 'FRACTION') {
+    return value * unitsTbl[`${unit}`][`${direction}`];
+  } else {
+    return value * unitsTbl[unit];
+  }
 };
 
-const translateUIUnits = element => {
-  console.log(element.oldunit, element.unit);
-
-  element.UI.translateX = getUnitUI(element.unit, element.UI.translateX);
-  element.UI.translateY = getUnitUI(element.unit, element.UI.translateY);
-
-  // console.log('BEFORE: ', JSON.stringify(element, null, 2));
-
-  // if (element.unit === 'EMU') {
-  //   element.data = element.UI;
-  // } else if (element.unit === 'FRACTION') {
-  //   console.log('booo son');
-  // } else {
-  //   console.log(element.unit);
-  //   console.log(element.UI.translateX);
-  //   console.log(element.UI.translateY);
-  //   element.data.translateX = getUnit(element.unit, element.UI.translateX);
-  //   element.data.translateY = getUnit(element.unit, element.UI.translateY);
-  // }
-
-  // // element.translateX = getUnit(unit, element.translateX);
-  // // element.translateY = getUnit(unit, element.translateY);
-
-  // console.log('AFTER: ', JSON.stringify(element, null, 2));
-
-  // this.setState({ element });
-};
-
-const translateUnits = element => {
-  console.log('BEFORE: ', JSON.stringify(element, null, 2));
-
+const translateUIToData = (element, presention) => {
   if (element.unit === 'EMU') {
     element.data = element.UI;
-  } else if (element.unit === 'FRACTION') {
-    console.log('booo son');
   } else {
-    console.log(element.unit);
-    console.log(element.UI.translateX);
-    console.log(element.UI.translateY);
-    element.data.translateX = getUnit(element.unit, element.UI.translateX);
-    element.data.translateY = getUnit(element.unit, element.UI.translateY);
+    element.data.translateX = toDataUnit(
+      getUnitsTable(presention),
+      element.unit,
+      element.UI.translateX,
+      'x'
+    );
+    element.data.translateY = toDataUnit(
+      getUnitsTable(presention),
+      element.unit,
+      element.UI.translateY,
+      'y'
+    );
+    element.data.scaleX = element.UI.scaleX;
+    element.data.scaleY = element.UI.scaleY;
   }
+};
 
-  // element.translateX = getUnit(unit, element.translateX);
-  // element.translateY = getUnit(unit, element.translateY);
-
-  console.log('AFTER: ', JSON.stringify(element, null, 2));
-
-  // this.setState({ element });
+const tranlateDataToUI = (ev, element, presention) => {
+  if (ev.target.name === 'unit') {
+    element[ev.target.name] = ev.target.value;
+    element.UI.translateX = toUIUnit(
+      getUnitsTable(presention),
+      element.unit,
+      element.data.translateX,
+      'x'
+    );
+    element.UI.translateY = toUIUnit(
+      getUnitsTable(presention),
+      element.unit,
+      element.data.translateY,
+      'y'
+    );
+  } else {
+    element.UI[ev.target.name] = Number(ev.target.value);
+  }
+  return Object.assign({}, element);
 };
 
 class Main extends Component {
@@ -104,126 +101,69 @@ class Main extends Component {
     this.handleSignOut = this.handleSignOut.bind(this);
     this.handleRefreshSlide = this.handleRefreshSlide.bind(this);
     this.handleCreateSlide = this.handleCreateSlide.bind(this);
-    this.handleGetShapes = this.handleGetShapes.bind(this);
-    this.handleMoveShape = this.handleMoveShape.bind(this);
-    this.handlMoveObject = this.handlMoveObject.bind(this);
-
+    this.handleGetInfo = this.handleGetInfo.bind(this);
+    this.handleMoveElement = this.handleMoveElement.bind(this);
     this.handleDialog = this.handleDialog.bind(this);
     this.handleDialogCancel = this.handleDialogCancel.bind(this);
     this.handleDialogMove = this.handleDialogMove.bind(this);
-    this.handleUpdateElement = this.handleUpdateElement.bind(this);
-
-    this.handlePickElement = this.handlePickElement.bind(this);
-
     this.handlePickSlide = this.handlePickSlide.bind(this);
     this.handlePickElement = this.handlePickElement.bind(this);
   }
 
-  handlMoveObject(ev) {
-    // console.log('hello', ev.target.value, ev.target.name);
-    // console.log('BEFORE state: ', JSON.stringify(this.state.element, null, 2));
-    const element = this.state.element;
-
-    // console.log(element.unit);
-
-    // console.log(ev.target.name, ev.target.value);
-    if (ev.target.name === 'unit') {
-      element['oldunit'] = element.unit || 'EMU';
-      element[ev.target.name] = ev.target.value;
-      translateUIUnits(element);
-    } else {
-      element.UI[ev.target.name] = Number(ev.target.value);
-    }
-
-    // console.log(element.unit);
-    // translateUnits(element.unit, element);
-
-    this.setState({ element });
-    // console.log('AFTER state: ', JSON.stringify(this.state.element, null, 2));
+  handleMoveElement(ev) {
+    this.setState({
+      element: tranlateDataToUI(
+        ev,
+        this.state.element,
+        this.state.presentation
+      ),
+    });
   }
 
   handlePickSlide(ev) {
-    // console.log('slideId', ev.target.value);
     !ev.target.value
       ? this.setState({ slideId: null, elementId: null })
       : this.setState({ slideId: ev.target.value, elementId: null });
   }
 
   handlePickElement(ev) {
-    // console.log('elementId', ev.target.value);
-
     !ev.target.value
       ? this.setState({ elementId: null })
       : this.setState({ elementId: ev.target.value });
-
-    // console.log('elementId', this.state.elementId);
-
     this.handleElementState(ev.target.value);
   }
 
   handleElementState(el) {
-    // console.log('handleElementState');
-    // console.log('elementId', this.state.elementId);
-
-    // if (!this.state.elementId) return;
-
     const slide = getSlide(this.state.presentation, this.state.slideId);
-    // console.log('slide: ', slide);
-    // console.log('this.state.elementId: ', this.state.elementId);
     const element = getElement(slide, el);
-    console.log('element: ', element);
-
     const elementInfo = getElementInfo(element);
-
-    // console.log(elementInfo);
-
     this.setState({ element: elementInfo });
   }
 
   handleDialog() {
-    // alert('booo');
     this.setState({ modal: !this.state.modal });
   }
 
   handleDialogCancel() {
-    // alert('booo');
     this.setState({ slideId: null, elementId: null, modal: false });
-    // this.setState({ modal: !this.state.modal });
   }
 
   handleDialogMove() {
-    // alert('booo');
-
-    translateUnits(this.state.element);
-
+    translateUIToData(this.state.element, this.state.presentation);
     MoveObject(
       this.state.presentation.presentationId,
       this.state.elementId,
       this.state.element.data,
       res => {
-        // console.log(JSON.stringify(res, null, 2));
-
+        // console.log(result);
         this.setState({ slideId: null, elementId: null, modal: false });
-        // this.setState({ modal: false });
         RefreshSlides(this.handleRefreshPresentaton.bind(this));
       }
     );
   }
 
-  handleUpdateElement(elementInfo) {
-    console.log(JSON.stringify(elementInfo, null, 2));
-    // this.setState({ element: elementInfo });
-  }
-
-  handleGetShapes() {
-    GetShapes(this.state.presentation);
-  }
-
-  handleMoveShape() {
-    MoveStuff(this.state.presentation, result => {
-      // console.log(result);
-      RefreshSlides(this.handleRefreshPresentaton.bind(this));
-    });
+  handleGetInfo() {
+    GetInfo(this.state.presentation);
   }
 
   handleSignIn(ev) {
@@ -271,7 +211,6 @@ class Main extends Component {
       this.setState({ authorized: true });
     } else {
       // this.setState({ presentation: JSON.parse(presentation) });
-
       this.setState({ authorized: true });
     }
   }
@@ -285,8 +224,7 @@ class Main extends Component {
           handleCreateSlide={this.handleCreateSlide}
           handleSignOut={this.handleSignOut}
           handleRefreshSlide={this.handleRefreshSlide}
-          handleGetShapes={this.handleGetShapes}
-          handleMoveShape={this.handleMoveShape}
+          handleGetInfo={this.handleGetInfo}
           handleDialog={this.handleDialog}
         />
         <Tree data={this.state.presentation} />
@@ -302,9 +240,8 @@ class Main extends Component {
             presentation={this.state.presentation}
             slideId={this.state.slideId}
             elementId={this.state.elementId}
-            handleUpdateElement={this.handleUpdateElement}
             elementInfo={this.state.element}
-            handleMove={this.handlMoveObject}
+            handleMove={this.handleMoveElement}
           />
         </Dialog>
       </>

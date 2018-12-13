@@ -22,6 +22,7 @@ const TheNav = props => (
         >
           Sign Out
         </Button>
+
         <Button
           onClick={props.handleRefreshSlide}
           color="danger"
@@ -30,6 +31,7 @@ const TheNav = props => (
         >
           Refresh Slide
         </Button>
+
         <Button
           onClick={props.handleCreateSlide}
           color="success"
@@ -40,29 +42,21 @@ const TheNav = props => (
         </Button>
 
         <Button
-          onClick={props.handleGetShapes}
+          onClick={props.handleGetInfo}
           color="success"
           size="sm"
           className="m-1"
         >
-          Get Shapes
+          Get Info
         </Button>
 
-        <Button
-          onClick={props.handleMoveShape}
-          color="success"
-          size="sm"
-          className="m-1"
-        >
-          Move Shape
-        </Button>
         <Button
           onClick={props.handleDialog}
           color="success"
           size="sm"
           className="m-1"
         >
-          Dialog
+          Move Element
         </Button>
       </>
     )}
