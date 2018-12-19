@@ -58,6 +58,15 @@ const TheNav = props => (
         >
           Move Element
         </Button>
+
+        <Button
+          onClick={props.handleArrangeDialog}
+          color="success"
+          size="sm"
+          className="m-1"
+        >
+          Arrange Elements
+        </Button>
       </>
     )}
   </div>

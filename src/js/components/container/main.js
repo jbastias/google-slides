@@ -2,12 +2,9 @@ import React, { Component } from 'react';
 import TheNav from '../presentational/thenav';
 import Tree from '../presentational/tree';
 import Dialog from '../presentational/dialog';
-import MoveForm, {
-  getSlide,
-  getElement,
-  getElementInfo,
-} from '../presentational/move-form';
-
+import MoveForm from '../presentational/move-form';
+import ArrangeForm from '../presentational/arrange-form';
+import { getSlide, getElement, getElementInfo } from '../../helpers/helpers';
 import {
   CreateSlide,
   RefreshSlides,
@@ -96,6 +93,7 @@ class Main extends Component {
       slideId: null,
       elementId: null,
       element: {},
+      arrangeModal: false,
     };
     this.handleSignIn = this.handleSignIn.bind(this);
     this.handleSignOut = this.handleSignOut.bind(this);
@@ -108,6 +106,11 @@ class Main extends Component {
     this.handleDialogMove = this.handleDialogMove.bind(this);
     this.handlePickSlide = this.handlePickSlide.bind(this);
     this.handlePickElement = this.handlePickElement.bind(this);
+    this.handleArrangeDialog = this.handleArrangeDialog.bind(this);
+    this.handleArrangeDialogCancel = this.handleArrangeDialogCancel.bind(this);
+    this.handleArrangeDialogArrange = this.handleArrangeDialogArrange.bind(
+      this
+    );
   }
 
   handleMoveElement(ev) {
@@ -146,6 +149,19 @@ class Main extends Component {
 
   handleDialogCancel() {
     this.setState({ slideId: null, elementId: null, modal: false });
+  }
+
+  handleArrangeDialog() {
+    this.setState({ arrangeModal: !this.state.arrangeModal });
+  }
+
+  handleArrangeDialogCancel() {
+    this.setState({ slideId: null, arrangeModal: false });
+  }
+
+  handleArrangeDialogArrange() {
+    console.log('=== arrange elements ===');
+    this.setState({ slideId: null, arrangeModal: false });
   }
 
   handleDialogMove() {
@@ -226,6 +242,7 @@ class Main extends Component {
           handleRefreshSlide={this.handleRefreshSlide}
           handleGetInfo={this.handleGetInfo}
           handleDialog={this.handleDialog}
+          handleArrangeDialog={this.handleArrangeDialog}
         />
         <Tree data={this.state.presentation} />
         <Dialog
@@ -242,6 +259,19 @@ class Main extends Component {
             elementId={this.state.elementId}
             elementInfo={this.state.element}
             handleMove={this.handleMoveElement}
+          />
+        </Dialog>
+        <Dialog
+          buttonLabel={'Arrange'}
+          title={'Arrange Elements'}
+          handleCancel={this.handleArrangeDialogCancel}
+          handleMove={this.handleArrangeDialogArrange}
+          modal={this.state.arrangeModal}
+        >
+          <ArrangeForm
+            pickSlide={this.handlePickSlide}
+            presentation={this.state.presentation}
+            slideId={this.state.slideId}
           />
         </Dialog>
       </>

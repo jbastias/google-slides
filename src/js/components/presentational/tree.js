@@ -8,7 +8,11 @@ const Tree = props => {
   ) {
     return null;
   }
-  return <JSONTree data={props.data} />;
+  return (
+    <div style={{ width: '100%', height: '10' }}>
+      <JSONTree data={props.data} />
+    </div>
+  );
 };
 
 export default Tree;
