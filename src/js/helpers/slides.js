@@ -1,7 +1,88 @@
+import { find, propEq, path } from 'ramda';
+import { toDataUnit, getUnitsTable } from '../helpers/helpers';
+
 const PRES_ID = '1wtG0Wvt_p7Qrziu-D1LODmB1irORHiHo4UxGR3q2Dfg';
+
+const getElementProp = (presentation, slideId, elementId, _path) => {
+  const slide = find(propEq('objectId', slideId))(presentation.slides);
+  const el = find(propEq('objectId', elementId))(slide.pageElements);
+  return path(_path, el);
+};
+
+export function AIMoveObjects(presentation, slideId, elements, cb) {
+  const requests = elements.map(el => {
+    return {
+      updatePageElementTransform: {
+        objectId: el.id,
+        transform: {
+          scaleX:
+            toDataUnit(
+              getUnitsTable(presentation),
+              'FRACTION',
+              el.style.w,
+              'x'
+            ) /
+            getElementProp(presentation, slideId, el.id, [
+              'size',
+              'width',
+              'magnitude',
+            ]),
+          scaleY:
+            toDataUnit(
+              getUnitsTable(presentation),
+              'FRACTION',
+              el.style.h,
+              'y'
+            ) /
+            getElementProp(presentation, slideId, el.id, [
+              'size',
+              'height',
+              'magnitude',
+            ]),
+          shearX: 0,
+          shearY: 0,
+          translateX: toDataUnit(
+            getUnitsTable(presentation),
+            'FRACTION',
+            el.style.x,
+            'x'
+          ),
+          translateY: toDataUnit(
+            getUnitsTable(presentation),
+            'FRACTION',
+            el.style.y,
+            'y'
+          ),
+          unit: 'EMU',
+        },
+        applyMode: 'ABSOLUTE',
+      },
+    };
+  });
+
+  gapi.client.slides.presentations
+    .batchUpdate({
+      presentationId: presentation.presentationId,
+      requests: requests,
+    })
+    .then(createSlideResponse => {
+      console.log(
+        `Move slide shape revision id: ${
+          createSlideResponse.result.writeControl.requiredRevisionId
+        }`
+      );
+      cb(createSlideResponse.result);
+    })
+    .catch(err => {
+      cb(err.message);
+    });
+}
 
 export function MoveObject(presentationId, objectId, transform, cb) {
   transform['unit'] = 'EMU';
+
+  console.log(transform);
+
   const requests = [
     {
       updatePageElementTransform: {

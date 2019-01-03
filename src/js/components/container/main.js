@@ -4,84 +4,22 @@ import Tree from '../presentational/tree';
 import Dialog from '../presentational/dialog';
 import MoveForm from '../presentational/move-form';
 import ArrangeForm from '../presentational/arrange-form';
-import { getSlide, getElement, getElementInfo } from '../../helpers/helpers';
+import {
+  elements,
+  getSlide,
+  getElement,
+  getElementInfo,
+  tranlateDataToUI,
+  translateUIToData,
+} from '../../helpers/helpers';
 import {
   CreateSlide,
   RefreshSlides,
   GetInfo,
   MoveObject,
+  AIMoveObjects,
 } from '../../helpers/slides';
-
-const getUnitsTable = presentation => {
-  const width = presentation.pageSize.width.magnitude;
-  const height = presentation.pageSize.height.magnitude;
-  return {
-    CM: 1 / 360000,
-    IN: 1 / 914400,
-    PT: 1 / 12700,
-    PX: 1 / 9525,
-    FRACTION: { x: 1 / width, y: 1 / height },
-    EMU: 1,
-  };
-};
-
-const toDataUnit = (unitsTbl, unit, value, direction) => {
-  if (unit === 'FRACTION') {
-    return value / unitsTbl[`${unit}`][`${direction}`];
-  } else {
-    return value / unitsTbl[unit];
-  }
-};
-
-const toUIUnit = (unitsTbl, unit, value, direction) => {
-  if (unit === 'FRACTION') {
-    return value * unitsTbl[`${unit}`][`${direction}`];
-  } else {
-    return value * unitsTbl[unit];
-  }
-};
-
-const translateUIToData = (element, presention) => {
-  if (element.unit === 'EMU') {
-    element.data = element.UI;
-  } else {
-    element.data.translateX = toDataUnit(
-      getUnitsTable(presention),
-      element.unit,
-      element.UI.translateX,
-      'x'
-    );
-    element.data.translateY = toDataUnit(
-      getUnitsTable(presention),
-      element.unit,
-      element.UI.translateY,
-      'y'
-    );
-    element.data.scaleX = element.UI.scaleX;
-    element.data.scaleY = element.UI.scaleY;
-  }
-};
-
-const tranlateDataToUI = (ev, element, presention) => {
-  if (ev.target.name === 'unit') {
-    element[ev.target.name] = ev.target.value;
-    element.UI.translateX = toUIUnit(
-      getUnitsTable(presention),
-      element.unit,
-      element.data.translateX,
-      'x'
-    );
-    element.UI.translateY = toUIUnit(
-      getUnitsTable(presention),
-      element.unit,
-      element.data.translateY,
-      'y'
-    );
-  } else {
-    element.UI[ev.target.name] = Number(ev.target.value);
-  }
-  return Object.assign({}, element);
-};
+import { Population } from 'evo';
 
 class Main extends Component {
   constructor() {
@@ -94,6 +32,7 @@ class Main extends Component {
       elementId: null,
       element: {},
       arrangeModal: false,
+      slideElements: {},
     };
     this.handleSignIn = this.handleSignIn.bind(this);
     this.handleSignOut = this.handleSignOut.bind(this);
@@ -111,6 +50,18 @@ class Main extends Component {
     this.handleArrangeDialogArrange = this.handleArrangeDialogArrange.bind(
       this
     );
+    this.handleSlideElements = this.handleSlideElements.bind(this);
+  }
+
+  handleSlideElements({ slideId, presentation }) {
+    if (!slideId) null;
+    const s = presentation.slides.filter(s => {
+      return s.objectId === slideId;
+    })[0];
+
+    const slideElements = elements(s.pageElements);
+
+    this.setState({ slideElements });
   }
 
   handleMoveElement(ev) {
@@ -127,6 +78,11 @@ class Main extends Component {
     !ev.target.value
       ? this.setState({ slideId: null, elementId: null })
       : this.setState({ slideId: ev.target.value, elementId: null });
+
+    this.handleSlideElements({
+      slideId: ev.target.value,
+      presentation: this.state.presentation,
+    });
   }
 
   handlePickElement(ev) {
@@ -160,8 +116,40 @@ class Main extends Component {
   }
 
   handleArrangeDialogArrange() {
-    console.log('=== arrange elements ===');
-    this.setState({ slideId: null, arrangeModal: false });
+    const population = new Population({
+      maxIterationsBestScore: 500,
+      iterations: 1000,
+      mutationChance: 0.7,
+      mateChance: 0.7,
+      size: 100,
+    });
+
+    Promise.resolve()
+      .then(() => population.run(this.state.slideElements))
+      .then(bestGene => {
+        console.log('bestGene: ', bestGene);
+        this.setState({
+          arrangeModal: false,
+          slideElements: bestGene.elements,
+        });
+      })
+      .then(() => {
+        console.log('AIMoveObjects');
+        AIMoveObjects(
+          this.state.presentation,
+          this.state.slideId,
+          this.state.slideElements,
+          () => {
+            this.setState({
+              slideId: null,
+              elementId: null,
+              modal: false,
+              slideElements: null,
+            });
+            RefreshSlides(this.handleRefreshPresentaton.bind(this));
+          }
+        );
+      });
   }
 
   handleDialogMove() {
@@ -170,8 +158,7 @@ class Main extends Component {
       this.state.presentation.presentationId,
       this.state.elementId,
       this.state.element.data,
-      res => {
-        // console.log(result);
+      () => {
         this.setState({ slideId: null, elementId: null, modal: false });
         RefreshSlides(this.handleRefreshPresentaton.bind(this));
       }
@@ -272,6 +259,7 @@ class Main extends Component {
             pickSlide={this.handlePickSlide}
             presentation={this.state.presentation}
             slideId={this.state.slideId}
+            slideElements={this.state.slideElements}
           />
         </Dialog>
       </>
