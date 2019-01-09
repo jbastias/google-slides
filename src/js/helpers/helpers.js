@@ -174,9 +174,32 @@ const getElementType = element => {
   return 'image';
 };
 
+const addImageSize = el => {
+  console.log(JSON.stringify(el, null, 2));
+
+  const type = getElementType(el);
+  if (type !== 'image') return {};
+
+  const sizes = {};
+
+  for (let i = 3; i <= 12; i++) {
+    const w = i / 12;
+    const h =
+      w *
+      ((el.size.height.magnitude * el.transform.scaleY) /
+        (el.size.width.magnitude * el.transform.scaleX));
+    sizes[i] = { w, h };
+  }
+
+  return sizes;
+};
+
 const makeElement = el => {
   // console.log(JSON.stringify(el, null, 2));
-  return {
+
+  const t = getElementType(el);
+
+  const obj = {
     id: el.objectId,
     metadata: {
       type: getElementType(el),
@@ -186,8 +209,16 @@ const makeElement = el => {
     style: getStyle(el),
     originalStyle: getStyle(el),
     naturalSize: getSize(el),
-    sizes: {},
+    sizes: addImageSize(el),
   };
+
+  if (t === 'image') {
+    obj.metadata['aspectRatio'] =
+      el.size.width.magnitude / el.size.height.magnitude;
+    obj.metadata['autoHeight'] = true;
+  }
+
+  return obj;
 };
 
 export const elements = elements => {
