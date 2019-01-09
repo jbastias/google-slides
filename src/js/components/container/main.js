@@ -59,7 +59,7 @@ class Main extends Component {
       return s.objectId === slideId;
     })[0];
 
-    const slideElements = elements(s.pageElements);
+    const slideElements = elements(s.pageElements, presentation);
 
     this.setState({ slideElements });
   }

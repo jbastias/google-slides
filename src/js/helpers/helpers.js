@@ -174,7 +174,7 @@ const getElementType = element => {
   return 'image';
 };
 
-const addImageSize = el => {
+const addImageSize = (el, pres) => {
   console.log(JSON.stringify(el, null, 2));
 
   const type = getElementType(el);
@@ -185,16 +185,15 @@ const addImageSize = el => {
   for (let i = 3; i <= 12; i++) {
     const w = i / 12;
     const h =
-      w *
-      ((el.size.height.magnitude * el.transform.scaleY) /
-        (el.size.width.magnitude * el.transform.scaleX));
+      ((w * el.size.height.magnitude) / el.size.width.magnitude) *
+      (pres.pageSize.width.magnitude / pres.pageSize.height.magnitude);
     sizes[i] = { w, h };
   }
 
   return sizes;
 };
 
-const makeElement = el => {
+const makeElement = presentation => el => {
   // console.log(JSON.stringify(el, null, 2));
 
   const t = getElementType(el);
@@ -209,7 +208,7 @@ const makeElement = el => {
     style: getStyle(el),
     originalStyle: getStyle(el),
     naturalSize: getSize(el),
-    sizes: addImageSize(el),
+    sizes: addImageSize(el, presentation),
   };
 
   if (t === 'image') {
@@ -221,6 +220,6 @@ const makeElement = el => {
   return obj;
 };
 
-export const elements = elements => {
-  return elements.map(makeElement);
+export const elements = (elements, presentation) => {
+  return elements.map(makeElement(presentation));
 };
