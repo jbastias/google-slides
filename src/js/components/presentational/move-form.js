@@ -56,7 +56,7 @@ const showElement = ({ slideId, elementId, elementInfo, handleMove }) => {
         </Col>
       </Row>
       <Row>
-        <Col>ScaleX</Col>
+        <Col>Width (ScaleX x size.Width)</Col>
         <Col>
           <Input
             type="text"
@@ -68,7 +68,7 @@ const showElement = ({ slideId, elementId, elementInfo, handleMove }) => {
         </Col>
       </Row>
       <Row>
-        <Col>ScaleY</Col>
+        <Col>Height (ScaleY x size.Height)</Col>
         <Col>
           <Input
             type="text"

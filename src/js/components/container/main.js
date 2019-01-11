@@ -94,6 +94,7 @@ class Main extends Component {
 
   handleElementState(el) {
     const slide = getSlide(this.state.presentation, this.state.slideId);
+    // console.log(JSON.stringify(slide, null, 2));
     const element = getElement(slide, el);
     const elementInfo = getElementInfo(element);
     this.setState({ element: elementInfo });
@@ -143,7 +144,6 @@ class Main extends Component {
             this.setState({
               slideId: null,
               elementId: null,
-              modal: false,
               slideElements: null,
             });
             RefreshSlides(this.handleRefreshPresentaton.bind(this));

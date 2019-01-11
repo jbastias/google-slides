@@ -30,6 +30,8 @@ export const toUIUnit = (unitsTbl, unit, value, direction) => {
 export const translateUIToData = (element, presention) => {
   if (element.unit === 'EMU') {
     element.data = element.UI;
+    element.data.scaleX = element.UI.scaleX / element.size.width.magnitude;
+    element.data.scaleY = element.UI.scaleY / element.size.height.magnitude;
   } else {
     element.data.translateX = toDataUnit(
       getUnitsTable(presention),
@@ -43,12 +45,24 @@ export const translateUIToData = (element, presention) => {
       element.UI.translateY,
       'y'
     );
-    element.data.scaleX = element.UI.scaleX;
-    element.data.scaleY = element.UI.scaleY;
+    element.data.scaleX = toDataUnit(
+      getUnitsTable(presention),
+      element.unit,
+      element.UI.scaleX / element.size.width.magnitude,
+      'x'
+    );
+    element.data.scaleY = toDataUnit(
+      getUnitsTable(presention),
+      element.unit,
+      element.UI.scaleY / element.size.height.magnitude,
+      'y'
+    );
   }
 };
 
 export const tranlateDataToUI = (ev, element, presention) => {
+  // console.log(JSON.stringify(element, null, 2));
+
   if (ev.target.name === 'unit') {
     element[ev.target.name] = ev.target.value;
     element.UI.translateX = toUIUnit(
@@ -63,8 +77,20 @@ export const tranlateDataToUI = (ev, element, presention) => {
       element.data.translateY,
       'y'
     );
+    element.UI.scaleX = toUIUnit(
+      getUnitsTable(presention),
+      element.unit,
+      element.data.scaleX * element.size.width.magnitude,
+      'x'
+    );
+    element.UI.scaleY = toUIUnit(
+      getUnitsTable(presention),
+      element.unit,
+      element.data.scaleY * element.size.height.magnitude,
+      'y'
+    );
   } else {
-    element.UI[ev.target.name] = Number(ev.target.value);
+    element.UI[ev.target.name] = ev.target.value;
   }
   return Object.assign({}, element);
 };
@@ -88,11 +114,12 @@ export const getElementInfo = element => {
   if (keys.includes('sheetsChart')) type = 'sheetsChart';
   if (keys.includes('line')) type = 'line';
 
-  console.log(JSON.stringify(element, null, 2));
+  // console.log(JSON.stringify(element, null, 2));
 
   return {
     type,
     unit: element.transform.unit,
+    size: element.size,
     data: {
       scaleX: element.transform.scaleX || 0,
       scaleY: element.transform.scaleY || 0,
@@ -102,8 +129,8 @@ export const getElementInfo = element => {
       translateY: element.transform.translateY || 0,
     },
     UI: {
-      scaleX: element.transform.scaleX || 0,
-      scaleY: element.transform.scaleY || 0,
+      scaleX: element.transform.scaleX * element.size.width.magnitude || 0,
+      scaleY: element.transform.scaleY * element.size.height.magnitude || 0,
       shearX: element.transform.shearX || 0,
       shearY: element.transform.shearY || 0,
       translateX: element.transform.translateX || 0,
@@ -175,11 +202,7 @@ const getElementType = element => {
 };
 
 const addImageSize = (el, pres) => {
-  console.log(JSON.stringify(el, null, 2));
-
-  const type = getElementType(el);
-  if (type !== 'image') return {};
-
+  // console.log(JSON.stringify(el, null, 2));
   const sizes = {};
 
   for (let i = 3; i <= 12; i++) {
@@ -191,6 +214,65 @@ const addImageSize = (el, pres) => {
   }
 
   return sizes;
+};
+
+const getTextStyle = textEl => {
+  console.log('textRun: ', textEl);
+  return {
+    fontFamily: textEl.textRun.style.fontFamily,
+    fontSize: textEl.textRun.style.fontSize.magnitude,
+  };
+};
+
+const addTextSize = (el, pres) => {
+  // console.log(JSON.stringify(el, null, 2));
+
+  let text = '';
+
+  const textEls = el.shape.text.textElements.filter(
+    obj =>
+      obj.hasOwnProperty('textRun') || obj.hasOwnProperty('paragraphMarker')
+  );
+
+  const styles = getTextStyle(textEls[1]);
+
+  console.log('font styles: ', styles);
+
+  textEls.forEach((textEl, index) => {
+    if (index === 0) return;
+    if (textEl.hasOwnProperty('paragraphMarker')) text = text + '<br>';
+    if (textEl.hasOwnProperty('textRun')) text = text + textEl.textRun.content;
+  });
+
+  const div = document.createElement('div');
+  div.style = `border: solid 1px red; width: 300pt; font-size: ${
+    styles.fontSize
+  }pt; font-family: ${styles.fontFamily}`;
+  div.innerHTML = text;
+  document.body.append(div);
+  const rect = div.getBoundingClientRect();
+  console.log(rect);
+  console.log(div);
+  // document.body.removeChild(div);
+
+  const sizes = {};
+
+  for (let i = 4; i <= 24; i++) {
+    const w = i / 24;
+    const h =
+      ((w * el.size.height.magnitude) / el.size.width.magnitude) *
+      (pres.pageSize.width.magnitude / pres.pageSize.height.magnitude);
+    sizes[i] = { w, h };
+  }
+
+  return sizes;
+};
+
+const addSize = (el, pres) => {
+  const type = getElementType(el);
+  if (type === 'image') return addImageSize(el, pres);
+  if (type === 'paragraph') return addTextSize(el, pres);
+  return {};
 };
 
 const makeElement = presentation => el => {
@@ -208,7 +290,7 @@ const makeElement = presentation => el => {
     style: getStyle(el),
     originalStyle: getStyle(el),
     naturalSize: getSize(el),
-    sizes: addImageSize(el, presentation),
+    sizes: addSize(el, presentation),
   };
 
   if (t === 'image') {
