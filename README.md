@@ -1,6 +1,9 @@
 # google-slides
 
 
+- [google slides](https://developers.google.com/slides/)
+- [batchUpdates requests](https://developers.google.com/slides/reference/rest/v1/presentations/request)
+- [updatepageElementTransformRequest - move an object](https://developers.google.com/slides/reference/rest/v1/presentations/request#updatepageelementtransformrequest)
 
 ## Slidebean Elements
 
