@@ -217,16 +217,33 @@ const addImageSize = (el, pres) => {
 };
 
 const getTextStyle = textEl => {
-  console.log('textRun: ', textEl);
+  // console.log('textRun: ', textEl);
   return {
     fontFamily: textEl.textRun.style.fontFamily,
     fontSize: textEl.textRun.style.fontSize.magnitude,
   };
 };
 
+// const getTextWidth = el => {
+//   const width = el.size.width.magnitude * el.transform.scaleX;
+//   // console.log(JSON.stringify(el, null, 2));
+//   return width;
+// };
+
+const createTextDiv = (text, styles, width) => {
+  const div = document.createElement('div');
+  div.style = `border: solid 1px red; width: ${width * 100}%; font-size: ${
+    styles.fontSize
+  }pt; font-family: ${styles.fontFamily}`;
+  div.innerHTML = text;
+  document.body.append(div);
+  const rect = div.getBoundingClientRect();
+  document.body.removeChild(div);
+  return rect;
+};
+
 const addTextSize = (el, pres) => {
   // console.log(JSON.stringify(el, null, 2));
-
   let text = '';
 
   const textEls = el.shape.text.textElements.filter(
@@ -236,32 +253,20 @@ const addTextSize = (el, pres) => {
 
   const styles = getTextStyle(textEls[1]);
 
-  console.log('font styles: ', styles);
-
   textEls.forEach((textEl, index) => {
     if (index === 0) return;
     if (textEl.hasOwnProperty('paragraphMarker')) text = text + '<br>';
     if (textEl.hasOwnProperty('textRun')) text = text + textEl.textRun.content;
   });
 
-  const div = document.createElement('div');
-  div.style = `border: solid 1px red; width: 300pt; font-size: ${
-    styles.fontSize
-  }pt; font-family: ${styles.fontFamily}`;
-  div.innerHTML = text;
-  document.body.append(div);
-  const rect = div.getBoundingClientRect();
-  console.log(rect);
-  console.log(div);
-  // document.body.removeChild(div);
-
   const sizes = {};
 
   for (let i = 4; i <= 24; i++) {
     const w = i / 24;
+    const rect = createTextDiv(text, styles, w);
     const h =
-      ((w * el.size.height.magnitude) / el.size.width.magnitude) *
-      (pres.pageSize.width.magnitude / pres.pageSize.height.magnitude);
+      rect.height /
+      toUIUnit(getUnitsTable(pres), 'PX', pres.pageSize.height.magnitude);
     sizes[i] = { w, h };
   }
 
@@ -277,7 +282,6 @@ const addSize = (el, pres) => {
 
 const makeElement = presentation => el => {
   // console.log(JSON.stringify(el, null, 2));
-
   const t = getElementType(el);
 
   const obj = {
@@ -296,6 +300,10 @@ const makeElement = presentation => el => {
   if (t === 'image') {
     obj.metadata['aspectRatio'] =
       el.size.width.magnitude / el.size.height.magnitude;
+    obj.metadata['autoHeight'] = true;
+  }
+
+  if (t === 'paragraph') {
     obj.metadata['autoHeight'] = true;
   }
 
