@@ -2,7 +2,13 @@ import React from 'react';
 import { Form, FormGroup, Label, Input } from 'reactstrap';
 import Tree from './tree';
 
-const ArrangeForm = ({ presentation, slideId, pickSlide, slideElements }) => {
+const ArrangeForm = ({
+  presentation,
+  slideId,
+  pickSlide,
+  slideElements,
+  showTree,
+}) => {
   const slides = presentation.slides.map(slide => slide.objectId);
 
   return (
@@ -17,7 +23,7 @@ const ArrangeForm = ({ presentation, slideId, pickSlide, slideElements }) => {
         </Input>
       </FormGroup>
 
-      {slideId && slideElements ? (
+      {showTree === 'true' && slideId && slideElements ? (
         <FormGroup>
           <Label for="elements">Elements</Label>
           <Tree data={slideElements} />

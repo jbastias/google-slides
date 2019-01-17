@@ -9,8 +9,79 @@ const getElementProp = (presentation, slideId, elementId, _path) => {
   return path(_path, el);
 };
 
+export function ResetObjectsSizes(presentation, slideId, elements, cb) {
+  const requests = elements
+    .filter(el => el.metadata.type === 'image')
+    .map(el => {
+      const translateX = getElementProp(presentation, slideId, el.id, [
+        'transform',
+        'translateX',
+      ]);
+      const translateY = getElementProp(presentation, slideId, el.id, [
+        'transform',
+        'translateY',
+      ]);
+      return {
+        updatePageElementTransform: {
+          objectId: el.id,
+          transform: {
+            scaleX: 381,
+            scaleY: 381,
+            shearX: 0,
+            shearY: 0,
+            translateX: translateX < 0 ? 1000000 : translateX,
+            translateY: translateY < 0 ? 1000000 : translateY,
+            unit: 'EMU',
+          },
+          applyMode: 'ABSOLUTE',
+        },
+      };
+    });
+
+  if (!requests.length) return cb();
+
+  gapi.client.slides.presentations
+    .batchUpdate({
+      presentationId: presentation.presentationId,
+      requests: requests,
+    })
+    .then(createSlideResponse => {
+      console.log(
+        `Move slide shape revision id: ${
+          createSlideResponse.result.writeControl.requiredRevisionId
+        }`
+      );
+      cb(createSlideResponse.result);
+    })
+    .catch(err => {
+      cb(err.message);
+    });
+}
+
 export function AIMoveObjects(presentation, slideId, elements, cb) {
   const requests = elements.map(el => {
+    console.log(
+      'width: ',
+      el.style.w,
+      'scaleX: ',
+      toDataUnit(getUnitsTable(presentation), 'FRACTION', el.style.w, 'x') /
+        getElementProp(presentation, slideId, el.id, [
+          'size',
+          'width',
+          'magnitude',
+        ])
+    );
+    console.log(
+      'height: ',
+      el.style.h,
+      'scaleY: ',
+      toDataUnit(getUnitsTable(presentation), 'FRACTION', el.style.h, 'y') /
+        getElementProp(presentation, slideId, el.id, [
+          'size',
+          'height',
+          'magnitude',
+        ])
+    );
     return {
       updatePageElementTransform: {
         objectId: el.id,
@@ -22,11 +93,17 @@ export function AIMoveObjects(presentation, slideId, elements, cb) {
               el.style.w,
               'x'
             ) /
-            getElementProp(presentation, slideId, el.id, [
-              'size',
-              'width',
-              'magnitude',
-            ]),
+              getElementProp(presentation, slideId, el.id, [
+                'size',
+                'width',
+                'magnitude',
+              ]) -
+            toDataUnit(getUnitsTable(presentation), 'PX', 20, 'x') /
+              getElementProp(presentation, slideId, el.id, [
+                'size',
+                'width',
+                'magnitude',
+              ]),
           scaleY:
             toDataUnit(
               getUnitsTable(presentation),
@@ -34,25 +111,33 @@ export function AIMoveObjects(presentation, slideId, elements, cb) {
               el.style.h,
               'y'
             ) /
-            getElementProp(presentation, slideId, el.id, [
-              'size',
-              'height',
-              'magnitude',
-            ]),
+              getElementProp(presentation, slideId, el.id, [
+                'size',
+                'height',
+                'magnitude',
+              ]) -
+            toDataUnit(getUnitsTable(presentation), 'PX', 20, 'y') /
+              getElementProp(presentation, slideId, el.id, [
+                'size',
+                'height',
+                'magnitude',
+              ]),
           shearX: 0,
           shearY: 0,
-          translateX: toDataUnit(
-            getUnitsTable(presentation),
-            'FRACTION',
-            el.style.x,
-            'x'
-          ),
-          translateY: toDataUnit(
-            getUnitsTable(presentation),
-            'FRACTION',
-            el.style.y,
-            'y'
-          ),
+          translateX:
+            toDataUnit(
+              getUnitsTable(presentation),
+              'FRACTION',
+              el.style.x,
+              'x'
+            ) + toDataUnit(getUnitsTable(presentation), 'PX', 10, 'y'),
+          translateY:
+            toDataUnit(
+              getUnitsTable(presentation),
+              'FRACTION',
+              el.style.y,
+              'y'
+            ) + toDataUnit(getUnitsTable(presentation), 'PX', 10, 'y'),
           unit: 'EMU',
         },
         applyMode: 'ABSOLUTE',
@@ -248,6 +333,7 @@ export function CreateSlide(cb) {
     createShape(pageId, createSize(100), createTransform(1, 1, 100, 100)),
     createShape(pageId, createSize(50), createTransform(1, 1, 200, 200)),
     createShape(pageId, createSize(150), createTransform(1, 1, 250, 250)),
+    createShape(pageId, createSize(10), createTransform(1, 1, 400, 400)),
   ];
 
   // Execute the request.

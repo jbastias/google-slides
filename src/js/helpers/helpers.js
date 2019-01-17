@@ -236,7 +236,7 @@ const createTextDiv = (text, styles, width) => {
   document.body.append(containerDiv);
 
   const div = document.createElement('div');
-  div.style = `border: solid 1px red; width: ${width * 100}%; font-size: ${
+  div.style = `border: solid 0px red; width: ${width * 100}%; font-size: ${
     styles.fontSize
   }pt; font-family: ${styles.fontFamily}`;
   div.innerHTML = text;

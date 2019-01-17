@@ -67,6 +67,15 @@ const TheNav = props => (
         >
           Arrange Elements
         </Button>
+
+        <Button
+          onClick={props.handleResetDialog}
+          color="success"
+          size="sm"
+          className="m-1"
+        >
+          Reset Elements
+        </Button>
       </>
     )}
   </div>

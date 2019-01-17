@@ -18,6 +18,7 @@ import {
   GetInfo,
   MoveObject,
   AIMoveObjects,
+  ResetObjectsSizes,
 } from '../../helpers/slides';
 import { Population } from 'evo';
 
@@ -32,6 +33,7 @@ class Main extends Component {
       elementId: null,
       element: {},
       arrangeModal: false,
+      resetModal: false,
       slideElements: {},
     };
     this.handleSignIn = this.handleSignIn.bind(this);
@@ -50,6 +52,9 @@ class Main extends Component {
     this.handleArrangeDialogArrange = this.handleArrangeDialogArrange.bind(
       this
     );
+    this.handleResetDialog = this.handleResetDialog.bind(this);
+    this.handleResetDialogCancel = this.handleResetDialogCancel.bind(this);
+    this.handleResetDialogReset = this.handleResetDialogReset.bind(this);
     this.handleSlideElements = this.handleSlideElements.bind(this);
   }
 
@@ -94,7 +99,6 @@ class Main extends Component {
 
   handleElementState(el) {
     const slide = getSlide(this.state.presentation, this.state.slideId);
-    // console.log(JSON.stringify(slide, null, 2));
     const element = getElement(slide, el);
     const elementInfo = getElementInfo(element);
     this.setState({ element: elementInfo });
@@ -114,6 +118,31 @@ class Main extends Component {
 
   handleArrangeDialogCancel() {
     this.setState({ slideId: null, arrangeModal: false });
+  }
+
+  handleResetDialog() {
+    this.setState({ resetModal: !this.state.resetModal });
+  }
+
+  handleResetDialogCancel() {
+    this.setState({ slideId: null, resetModal: false });
+  }
+
+  handleResetDialogReset() {
+    ResetObjectsSizes(
+      this.state.presentation,
+      this.state.slideId,
+      this.state.slideElements,
+      () => {
+        this.setState({
+          slideId: null,
+          elementId: null,
+          slideElements: null,
+        });
+        RefreshSlides(this.handleRefreshPresentaton.bind(this));
+        this.setState({ resetModal: false });
+      }
+    );
   }
 
   handleArrangeDialogArrange() {
@@ -169,7 +198,7 @@ class Main extends Component {
     GetInfo(this.state.presentation);
   }
 
-  handleSignIn(ev) {
+  handleSignIn() {
     gapi.auth2
       .getAuthInstance()
       .signIn()
@@ -178,7 +207,7 @@ class Main extends Component {
       .catch(err => console.log(err));
   }
 
-  handleSignOut(ev) {
+  handleSignOut() {
     gapi.auth2
       .getAuthInstance()
       .signOut()
@@ -192,13 +221,12 @@ class Main extends Component {
     this.setState({ presentation });
   }
 
-  handleRefreshSlide(ev) {
+  handleRefreshSlide() {
     RefreshSlides(this.handleRefreshPresentaton.bind(this));
   }
 
-  handleCreateSlide(ev) {
-    CreateSlide(result => {
-      // console.log(result);
+  handleCreateSlide() {
+    CreateSlide(() => {
       RefreshSlides(this.handleRefreshPresentaton.bind(this));
     });
   }
@@ -230,6 +258,7 @@ class Main extends Component {
           handleGetInfo={this.handleGetInfo}
           handleDialog={this.handleDialog}
           handleArrangeDialog={this.handleArrangeDialog}
+          handleResetDialog={this.handleResetDialog}
         />
         <Tree data={this.state.presentation} />
         <Dialog
@@ -260,6 +289,23 @@ class Main extends Component {
             presentation={this.state.presentation}
             slideId={this.state.slideId}
             slideElements={this.state.slideElements}
+            showTree="true"
+          />
+        </Dialog>
+
+        <Dialog
+          buttonLabel={'Reset Size'}
+          title={'Reset Element Sizes'}
+          handleCancel={this.handleResetDialogCancel}
+          handleMove={this.handleResetDialogReset}
+          modal={this.state.resetModal}
+        >
+          <ArrangeForm
+            pickSlide={this.handlePickSlide}
+            presentation={this.state.presentation}
+            slideId={this.state.slideId}
+            slideElements={this.state.slideElements}
+            showTree="false"
           />
         </Dialog>
       </>
