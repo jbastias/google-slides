@@ -231,14 +231,18 @@ const getTextStyle = textEl => {
 // };
 
 const createTextDiv = (text, styles, width) => {
+  const containerDiv = document.createElement('div');
+  containerDiv.style = `border: solid 0px red; width: 1600px; position: absolute; left: -2000px;`;
+  document.body.append(containerDiv);
+
   const div = document.createElement('div');
   div.style = `border: solid 1px red; width: ${width * 100}%; font-size: ${
     styles.fontSize
   }pt; font-family: ${styles.fontFamily}`;
   div.innerHTML = text;
-  document.body.append(div);
+  containerDiv.append(div);
   const rect = div.getBoundingClientRect();
-  document.body.removeChild(div);
+  document.body.removeChild(containerDiv);
   return rect;
 };
 
