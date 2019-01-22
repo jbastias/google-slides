@@ -9,6 +9,27 @@ const getElementProp = (presentation, slideId, elementId, _path) => {
   return path(_path, el);
 };
 
+const updatePresentation = (presentationId, requests, cb) => {
+  if (!requests.length) return cb();
+
+  return gapi.client.slides.presentations
+    .batchUpdate({
+      presentationId: presentationId,
+      requests: requests,
+    })
+    .then(createSlideResponse => {
+      console.log(
+        `Move slide shape revision id: ${
+          createSlideResponse.result.writeControl.requiredRevisionId
+        }`
+      );
+      cb(createSlideResponse.result);
+    })
+    .catch(err => {
+      cb(err.message);
+    });
+};
+
 export function ResetObjectsSizes(presentation, slideId, elements, cb) {
   const requests = elements
     .filter(el => el.metadata.type === 'image')
@@ -38,106 +59,77 @@ export function ResetObjectsSizes(presentation, slideId, elements, cb) {
       };
     });
 
-  if (!requests.length) return cb();
-
-  gapi.client.slides.presentations
-    .batchUpdate({
-      presentationId: presentation.presentationId,
-      requests: requests,
-    })
-    .then(createSlideResponse => {
-      console.log(
-        `Move slide shape revision id: ${
-          createSlideResponse.result.writeControl.requiredRevisionId
-        }`
-      );
-      cb(createSlideResponse.result);
-    })
-    .catch(err => {
-      cb(err.message);
-    });
+  updatePresentation(presentation.presentationId, requests, cb);
 }
 
-export function AIMoveObjects(presentation, slideId, elements, cb) {
-  const requests = elements.map(el => {
-    console.log(
-      'width: ',
-      el.style.w,
-      'scaleX: ',
-      toDataUnit(getUnitsTable(presentation), 'FRACTION', el.style.w, 'x') /
+const newScaleX = (presentation, slideId, el, pad) => {
+  return (
+    toDataUnit(getUnitsTable(presentation), 'FRACTION', el.style.w, 'x') /
+      getElementProp(presentation, slideId, el.id, [
+        'size',
+        'width',
+        'magnitude',
+      ]) -
+    (el.metadata.type === 'paragraph'
+      ? 0
+      : toDataUnit(getUnitsTable(presentation), 'PX', pad, 'x') /
         getElementProp(presentation, slideId, el.id, [
           'size',
           'width',
           'magnitude',
-        ])
-    );
-    console.log(
-      'height: ',
-      el.style.h,
-      'scaleY: ',
-      toDataUnit(getUnitsTable(presentation), 'FRACTION', el.style.h, 'y') /
+        ]))
+  );
+};
+
+const newScaleY = (presentation, slideId, el, pad) => {
+  return (
+    toDataUnit(getUnitsTable(presentation), 'FRACTION', el.style.h, 'y') /
+      getElementProp(presentation, slideId, el.id, [
+        'size',
+        'height',
+        'magnitude',
+      ]) -
+    (el.metadata.type === 'paragraph'
+      ? 0
+      : toDataUnit(getUnitsTable(presentation), 'PX', pad, 'y') /
         getElementProp(presentation, slideId, el.id, [
           'size',
           'height',
           'magnitude',
-        ])
-    );
+        ]))
+  );
+};
+
+const newTranslateX = (presentation, el, move) => {
+  return (
+    toDataUnit(getUnitsTable(presentation), 'FRACTION', el.style.x, 'x') +
+    (el.metadata.type === 'paragraphXXX'
+      ? 0
+      : toDataUnit(getUnitsTable(presentation), 'PX', move, 'x'))
+  );
+};
+
+const newTranslateY = (presentation, el, move) => {
+  return (
+    toDataUnit(getUnitsTable(presentation), 'FRACTION', el.style.y, 'y') +
+    (el.metadata.type === 'paragraphXXX'
+      ? 0
+      : toDataUnit(getUnitsTable(presentation), 'PX', move, 'y'))
+  );
+};
+
+export function AIMoveObjects(presentation, slideId, elements, cb) {
+  const requests = elements.map(el => {
     return {
       updatePageElementTransform: {
         objectId: el.id,
         transform: {
-          scaleX:
-            toDataUnit(
-              getUnitsTable(presentation),
-              'FRACTION',
-              el.style.w,
-              'x'
-            ) /
-              getElementProp(presentation, slideId, el.id, [
-                'size',
-                'width',
-                'magnitude',
-              ]) -
-            toDataUnit(getUnitsTable(presentation), 'PX', 20, 'x') /
-              getElementProp(presentation, slideId, el.id, [
-                'size',
-                'width',
-                'magnitude',
-              ]),
-          scaleY:
-            toDataUnit(
-              getUnitsTable(presentation),
-              'FRACTION',
-              el.style.h,
-              'y'
-            ) /
-              getElementProp(presentation, slideId, el.id, [
-                'size',
-                'height',
-                'magnitude',
-              ]) -
-            toDataUnit(getUnitsTable(presentation), 'PX', 20, 'y') /
-              getElementProp(presentation, slideId, el.id, [
-                'size',
-                'height',
-                'magnitude',
-              ]),
+          scaleX: newScaleX(presentation, slideId, el, 50),
+          scaleY: newScaleY(presentation, slideId, el, 50),
           shearX: 0,
           shearY: 0,
-          translateX:
-            toDataUnit(
-              getUnitsTable(presentation),
-              'FRACTION',
-              el.style.x,
-              'x'
-            ) + toDataUnit(getUnitsTable(presentation), 'PX', 10, 'y'),
-          translateY:
-            toDataUnit(
-              getUnitsTable(presentation),
-              'FRACTION',
-              el.style.y,
-              'y'
-            ) + toDataUnit(getUnitsTable(presentation), 'PX', 10, 'y'),
+          translateX: newTranslateX(presentation, el, 25),
+          translateY: newTranslateY(presentation, el, 25),
           unit: 'EMU',
         },
         applyMode: 'ABSOLUTE',
@@ -145,22 +137,7 @@ export function AIMoveObjects(presentation, slideId, elements, cb) {
     };
   });
 
-  gapi.client.slides.presentations
-    .batchUpdate({
-      presentationId: presentation.presentationId,
-      requests: requests,
-    })
-    .then(createSlideResponse => {
-      console.log(
-        `Move slide shape revision id: ${
-          createSlideResponse.result.writeControl.requiredRevisionId
-        }`
-      );
-      cb(createSlideResponse.result);
-    })
-    .catch(err => {
-      cb(err.message);
-    });
+  updatePresentation(presentation.presentationId, requests, cb);
 }
 
 export function MoveObject(presentationId, objectId, transform, cb) {
@@ -178,19 +155,7 @@ export function MoveObject(presentationId, objectId, transform, cb) {
     },
   ];
 
-  gapi.client.slides.presentations
-    .batchUpdate({
-      presentationId: presentationId,
-      requests: requests,
-    })
-    .then(createSlideResponse => {
-      console.log(
-        `Move slide shape revision id: ${
-          createSlideResponse.result.writeControl.requiredRevisionId
-        }`
-      );
-      cb(createSlideResponse.result);
-    });
+  updatePresentation(presentationId, requests, cb);
 }
 
 export function GetInfo(presentation) {
@@ -336,18 +301,5 @@ export function CreateSlide(cb) {
     createShape(pageId, createSize(10), createTransform(1, 1, 400, 400)),
   ];
 
-  // Execute the request.
-  gapi.client.slides.presentations
-    .batchUpdate({
-      presentationId: PRES_ID,
-      requests: requests,
-    })
-    .then(createSlideResponse => {
-      console.log(
-        `Created slide with ID: ${
-          createSlideResponse.result.replies[0].createSlide.objectId
-        }`
-      );
-      cb(createSlideResponse.result);
-    });
+  updatePresentation(PRES_ID, requests, cb);
 }

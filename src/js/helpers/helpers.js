@@ -224,15 +224,9 @@ const getTextStyle = textEl => {
   };
 };
 
-// const getTextWidth = el => {
-//   const width = el.size.width.magnitude * el.transform.scaleX;
-//   // console.log(JSON.stringify(el, null, 2));
-//   return width;
-// };
-
-const createTextDiv = (text, styles, width) => {
+const createTextDiv = (text, styles, width, slideWidth) => {
   const containerDiv = document.createElement('div');
-  containerDiv.style = `border: solid 0px red; width: 1600px; position: absolute; left: -2000px;`;
+  containerDiv.style = `border: solid 0px red; width: ${slideWidth}px; position: absolute; left: -2000px;`;
   document.body.append(containerDiv);
 
   const div = document.createElement('div');
@@ -244,6 +238,15 @@ const createTextDiv = (text, styles, width) => {
   const rect = div.getBoundingClientRect();
   document.body.removeChild(containerDiv);
   return rect;
+};
+
+const getSlidewidthInPx = presentation => {
+  return toUIUnit(
+    getUnitsTable(presentation),
+    'PX',
+    presentation.pageSize.width.magnitude,
+    'x'
+  );
 };
 
 const addTextSize = (el, pres) => {
@@ -267,7 +270,7 @@ const addTextSize = (el, pres) => {
 
   for (let i = 4; i <= 24; i++) {
     const w = i / 24;
-    const rect = createTextDiv(text, styles, w);
+    const rect = createTextDiv(text, styles, w, getSlidewidthInPx(pres));
     const h =
       rect.height /
       toUIUnit(getUnitsTable(pres), 'PX', pres.pageSize.height.magnitude);
