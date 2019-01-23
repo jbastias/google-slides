@@ -216,24 +216,13 @@ const addImageSize = (el, pres) => {
   return sizes;
 };
 
-const getTextStyle = textEl => {
-  // console.log('textRun: ', textEl);
-  return {
-    fontFamily: textEl.textRun.style.fontFamily,
-    fontSize: textEl.textRun.style.fontSize.magnitude,
-  };
-};
-
-const createTextDiv = (text, styles, width, slideWidth) => {
+const createTextDiv = (content, width, slideWidth) => {
   const containerDiv = document.createElement('div');
-  containerDiv.style = `border: solid 0px red; width: ${slideWidth}px; position: absolute; left: -2000px;`;
+  containerDiv.style = `border: solid 0px red; width: ${slideWidth}px; position: absolute;`; // position: absolute; left: -2000px;`;
   document.body.append(containerDiv);
-
   const div = document.createElement('div');
-  div.style = `border: solid 0px red; width: ${width * 100}%; font-size: ${
-    styles.fontSize
-  }pt; font-family: ${styles.fontFamily}`;
-  div.innerHTML = text;
+  div.style = `padding: 20px; border: solid 1px red; width: ${width * 100}%;`;
+  div.innerHTML = content;
   containerDiv.append(div);
   const rect = div.getBoundingClientRect();
   document.body.removeChild(containerDiv);
@@ -249,28 +238,55 @@ const getSlidewidthInPx = presentation => {
   );
 };
 
-const addTextSize = (el, pres) => {
-  // console.log(JSON.stringify(el, null, 2));
-  let text = '';
+const getTextStyle = textEl => {
+  const style = textEl.textRun.style;
+  return {
+    fontFamily: style.fontFamily,
+    fontSize: style.fontSize.magnitude,
+    fontSizeUnit: style.fontSize.unit,
+    bold: style.bold,
+    italic: style.italic,
+  };
+};
+
+const createSpan = textEl => {
+  const style = getTextStyle(textEl);
+  let el = '<span style="';
+  el = el + 'font-famliy: ' + style.fontFamily + '; ';
+  el = el + 'font-size: ' + style.fontSize + 'pt; ';
+  el + style.bold ? 'font-weight: bold; ' : '';
+  el + style.italic ? 'font-style: italic; ' : '';
+  el + '>';
+  el = textEl.textRun.content;
+  el + '</span>';
+  return el;
+};
+
+const createContent = el => {
+  let content = '';
 
   const textEls = el.shape.text.textElements.filter(
     obj =>
       obj.hasOwnProperty('textRun') || obj.hasOwnProperty('paragraphMarker')
   );
 
-  const styles = getTextStyle(textEls[1]);
-
   textEls.forEach((textEl, index) => {
     if (index === 0) return;
-    if (textEl.hasOwnProperty('paragraphMarker')) text = text + '<br>';
-    if (textEl.hasOwnProperty('textRun')) text = text + textEl.textRun.content;
+    if (textEl.hasOwnProperty('paragraphMarker')) content = content + '<br>';
+    if (textEl.hasOwnProperty('textRun'))
+      content = content + createSpan(textEl);
   });
 
+  return content;
+};
+
+const addTextSize = (el, pres) => {
   const sizes = {};
 
   for (let i = 4; i <= 24; i++) {
     const w = i / 24;
-    const rect = createTextDiv(text, styles, w, getSlidewidthInPx(pres));
+    const rect = createTextDiv(createContent(el), w, getSlidewidthInPx(pres));
+    // console.log(rect);
     const h =
       rect.height /
       toUIUnit(getUnitsTable(pres), 'PX', pres.pageSize.height.magnitude);
