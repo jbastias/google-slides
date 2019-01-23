@@ -31,7 +31,11 @@ const TheNav = props => (
         >
           Refresh Slide
         </Button>
+      </>
+    )}
 
+    {props.authorized && Object.keys(props.presentation).length ? (
+      <>
         <Button
           onClick={props.handleCreateSlide}
           color="success"
@@ -42,16 +46,16 @@ const TheNav = props => (
         </Button>
 
         <Button
-          onClick={props.handleGetInfo}
+          onClick={props.handleGetPresentationInfo}
           color="success"
           size="sm"
           className="m-1"
         >
-          Get Info
+          Get Pres Info
         </Button>
 
         <Button
-          onClick={props.handleDialog}
+          onClick={props.handleDialogOpen}
           color="success"
           size="sm"
           className="m-1"
@@ -60,7 +64,7 @@ const TheNav = props => (
         </Button>
 
         <Button
-          onClick={props.handleArrangeDialog}
+          onClick={props.handleArrangeDialogOpen}
           color="success"
           size="sm"
           className="m-1"
@@ -69,7 +73,7 @@ const TheNav = props => (
         </Button>
 
         <Button
-          onClick={props.handleResetDialog}
+          onClick={props.handleResetDialogOpen}
           color="success"
           size="sm"
           className="m-1"
@@ -77,7 +81,7 @@ const TheNav = props => (
           Reset Elements
         </Button>
       </>
-    )}
+    ) : null}
   </div>
 );
 

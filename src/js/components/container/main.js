@@ -1,31 +1,28 @@
 import React, { Component } from 'react';
-import TheNav from '../presentational/thenav';
-import Tree from '../presentational/tree';
-import Dialog from '../presentational/dialog';
-import MoveForm from '../presentational/move-form';
-import ArrangeForm from '../presentational/arrange-form';
+import { Population } from 'evo';
+import { TheNav, Tree, Dialog, MoveForm, ArrangeForm } from '../';
 import {
-  elements,
   getSlide,
   getElement,
   getElementInfo,
   tranlateDataToUI,
   translateUIToData,
-} from '../../helpers/helpers';
-import {
-  CreateSlide,
   RefreshSlides,
-  GetInfo,
   MoveObject,
   AIMoveObjects,
   ResetObjectsSizes,
-} from '../../helpers/slides';
-import { Population } from 'evo';
+  CreateSlide,
+  GetPresentationInfo,
+  makeElements,
+  makePresObj,
+} from '../../helpers';
 
 class Main extends Component {
   constructor() {
     super();
+
     this.state = {
+      presId: '1wtG0Wvt_p7Qrziu-D1LODmB1irORHiHo4UxGR3q2Dfg',
       authorized: false,
       modal: false,
       presentation: {},
@@ -35,41 +32,88 @@ class Main extends Component {
       arrangeModal: false,
       resetModal: false,
       slideElements: {},
+      presObj: null,
     };
+
+    // nav buttons
     this.handleSignIn = this.handleSignIn.bind(this);
     this.handleSignOut = this.handleSignOut.bind(this);
     this.handleRefreshSlide = this.handleRefreshSlide.bind(this);
     this.handleCreateSlide = this.handleCreateSlide.bind(this);
-    this.handleGetInfo = this.handleGetInfo.bind(this);
-    this.handleMoveElement = this.handleMoveElement.bind(this);
-    this.handleDialog = this.handleDialog.bind(this);
+    this.handleGetPresentationInfo = this.handleGetPresentationInfo.bind(this);
+
+    // move dialog
+    this.handleMoveElementProperty = this.handleMoveElementProperty.bind(this);
+    this.handleDialogOpen = this.handleDialogOpen.bind(this);
     this.handleDialogCancel = this.handleDialogCancel.bind(this);
     this.handleDialogMove = this.handleDialogMove.bind(this);
+
+    // arrange dialog
+    this.handleArrangeDialogOpen = this.handleArrangeDialogOpen.bind(this);
+    this.handleArrangeDialogCancel = this.handleArrangeDialogCancel.bind(this);
+    this.handleArrangeDialogDo = this.handleArrangeDialogDo.bind(this);
+
+    // reset dialog
+    this.handleResetDialogOpen = this.handleResetDialogOpen.bind(this);
+    this.handleResetDialogCancel = this.handleResetDialogCancel.bind(this);
+    this.handleResetDialogDo = this.handleResetDialogDo.bind(this);
+
+    // utils
     this.handlePickSlide = this.handlePickSlide.bind(this);
     this.handlePickElement = this.handlePickElement.bind(this);
-    this.handleArrangeDialog = this.handleArrangeDialog.bind(this);
-    this.handleArrangeDialogCancel = this.handleArrangeDialogCancel.bind(this);
-    this.handleArrangeDialogArrange = this.handleArrangeDialogArrange.bind(
-      this
-    );
-    this.handleResetDialog = this.handleResetDialog.bind(this);
-    this.handleResetDialogCancel = this.handleResetDialogCancel.bind(this);
-    this.handleResetDialogReset = this.handleResetDialogReset.bind(this);
     this.handleSlideElements = this.handleSlideElements.bind(this);
+  }
+
+  // nav buttons
+  handleSignIn() {
+    gapi.auth2
+      .getAuthInstance()
+      .signIn()
+      .then(res => console.log('signin', res))
+      .then(() => this.setState({ authorized: true }))
+      .catch(err => console.log(err));
+  }
+
+  handleSignOut() {
+    gapi.auth2
+      .getAuthInstance()
+      .signOut()
+      .then(res => console.log('signout: ', res))
+      .then(() => this.setState({ authorized: false }))
+      .catch(err => console.log(err));
+  }
+
+  handleRefreshSlide() {
+    RefreshSlides(this.state.presId, this.handleRefreshPresentaton.bind(this));
+  }
+
+  handleRefreshPresentaton(presentation) {
+    localStorage.setItem('presentation', JSON.stringify(presentation));
+    this.setState({ presentation, presObj: makePresObj(presentation) });
+  }
+
+  handleCreateSlide() {
+    CreateSlide(this.state.presId, () => {
+      RefreshSlides(
+        this.state.presId,
+        this.handleRefreshPresentaton.bind(this)
+      );
+    });
+  }
+
+  handleGetPresentationInfo() {
+    GetPresentationInfo(this.state.presentation);
   }
 
   handleSlideElements({ slideId, presentation }) {
     if (!slideId) null;
-    const s = presentation.slides.filter(s => {
-      return s.objectId === slideId;
-    })[0];
-
-    const slideElements = elements(s.pageElements, presentation);
-
+    const s = getSlide(presentation, slideId);
+    const slideElements = makeElements(s.pageElements, presentation, slideId);
     this.setState({ slideElements });
   }
 
-  handleMoveElement(ev) {
+  // move dialog
+  handleMoveElementProperty(ev) {
     this.setState({
       element: tranlateDataToUI(
         ev,
@@ -79,32 +123,7 @@ class Main extends Component {
     });
   }
 
-  handlePickSlide(ev) {
-    !ev.target.value
-      ? this.setState({ slideId: null, elementId: null })
-      : this.setState({ slideId: ev.target.value, elementId: null });
-
-    this.handleSlideElements({
-      slideId: ev.target.value,
-      presentation: this.state.presentation,
-    });
-  }
-
-  handlePickElement(ev) {
-    !ev.target.value
-      ? this.setState({ elementId: null })
-      : this.setState({ elementId: ev.target.value });
-    this.handleElementState(ev.target.value);
-  }
-
-  handleElementState(el) {
-    const slide = getSlide(this.state.presentation, this.state.slideId);
-    const element = getElement(slide, el);
-    const elementInfo = getElementInfo(element);
-    this.setState({ element: elementInfo });
-  }
-
-  handleDialog() {
+  handleDialogOpen() {
     this.setState({ modal: !this.state.modal });
   }
 
@@ -112,7 +131,24 @@ class Main extends Component {
     this.setState({ slideId: null, elementId: null, modal: false });
   }
 
-  handleArrangeDialog() {
+  handleDialogMove() {
+    translateUIToData(this.state.element, this.state.presentation);
+    MoveObject(
+      this.state.presentation.presentationId,
+      this.state.elementId,
+      this.state.element.data,
+      () => {
+        this.setState({ slideId: null, elementId: null, modal: false });
+        RefreshSlides(
+          this.state.presId,
+          this.handleRefreshPresentaton.bind(this)
+        );
+      }
+    );
+  }
+
+  // arrange dialog
+  handleArrangeDialogOpen() {
     this.setState({ arrangeModal: !this.state.arrangeModal });
   }
 
@@ -120,32 +156,7 @@ class Main extends Component {
     this.setState({ slideId: null, arrangeModal: false });
   }
 
-  handleResetDialog() {
-    this.setState({ resetModal: !this.state.resetModal });
-  }
-
-  handleResetDialogCancel() {
-    this.setState({ slideId: null, resetModal: false });
-  }
-
-  handleResetDialogReset() {
-    ResetObjectsSizes(
-      this.state.presentation,
-      this.state.slideId,
-      this.state.slideElements,
-      () => {
-        this.setState({
-          slideId: null,
-          elementId: null,
-          slideElements: null,
-        });
-        RefreshSlides(this.handleRefreshPresentaton.bind(this));
-        this.setState({ resetModal: false });
-      }
-    );
-  }
-
-  handleArrangeDialogArrange() {
+  handleArrangeDialogDo() {
     const population = new Population({
       maxIterationsBestScore: 500,
       iterations: 1000,
@@ -175,60 +186,68 @@ class Main extends Component {
               elementId: null,
               slideElements: null,
             });
-            RefreshSlides(this.handleRefreshPresentaton.bind(this));
+            RefreshSlides(
+              this.state.presId,
+              this.handleRefreshPresentaton.bind(this)
+            );
           }
         );
       });
   }
 
-  handleDialogMove() {
-    translateUIToData(this.state.element, this.state.presentation);
-    MoveObject(
-      this.state.presentation.presentationId,
-      this.state.elementId,
-      this.state.element.data,
+  // reset dialog
+  handleResetDialogOpen() {
+    this.setState({ resetModal: !this.state.resetModal });
+  }
+
+  handleResetDialogCancel() {
+    this.setState({ slideId: null, resetModal: false });
+  }
+
+  handleResetDialogDo() {
+    ResetObjectsSizes(
+      this.state.presentation,
+      this.state.slideId,
+      this.state.slideElements,
       () => {
-        this.setState({ slideId: null, elementId: null, modal: false });
-        RefreshSlides(this.handleRefreshPresentaton.bind(this));
+        this.setState({
+          slideId: null,
+          elementId: null,
+          slideElements: null,
+        });
+        RefreshSlides(
+          this.state.presId,
+          this.handleRefreshPresentaton.bind(this)
+        );
+        this.setState({ resetModal: false });
       }
     );
   }
 
-  handleGetInfo() {
-    GetInfo(this.state.presentation);
-  }
+  // utils
+  handlePickSlide(ev) {
+    !ev.target.value
+      ? this.setState({ slideId: null, elementId: null })
+      : this.setState({ slideId: ev.target.value, elementId: null });
 
-  handleSignIn() {
-    gapi.auth2
-      .getAuthInstance()
-      .signIn()
-      .then(res => console.log('signin', res))
-      .then(() => this.setState({ authorized: true }))
-      .catch(err => console.log(err));
-  }
-
-  handleSignOut() {
-    gapi.auth2
-      .getAuthInstance()
-      .signOut()
-      .then(res => console.log('signout: ', res))
-      .then(() => this.setState({ authorized: false }))
-      .catch(err => console.log(err));
-  }
-
-  handleRefreshPresentaton(presentation) {
-    localStorage.setItem('presentation', JSON.stringify(presentation));
-    this.setState({ presentation });
-  }
-
-  handleRefreshSlide() {
-    RefreshSlides(this.handleRefreshPresentaton.bind(this));
-  }
-
-  handleCreateSlide() {
-    CreateSlide(() => {
-      RefreshSlides(this.handleRefreshPresentaton.bind(this));
+    this.handleSlideElements({
+      slideId: ev.target.value,
+      presentation: this.state.presentation,
     });
+  }
+
+  handlePickElement(ev) {
+    !ev.target.value
+      ? this.setState({ elementId: null })
+      : this.setState({ elementId: ev.target.value });
+    this.handleElementState(ev.target.value);
+  }
+
+  handleElementState(el) {
+    const slide = getSlide(this.state.presentation, this.state.slideId);
+    const element = getElement(slide, el);
+    const elementInfo = getElementInfo(element);
+    this.setState({ element: elementInfo });
   }
 
   componentDidMount() {
@@ -238,10 +257,8 @@ class Main extends Component {
       JSON.stringify(presentation)
     );
     if (connected === 'true') {
-      // this.setState({ presentation: JSON.parse(presentation) });
       this.setState({ authorized: true });
     } else {
-      // this.setState({ presentation: JSON.parse(presentation) });
       this.setState({ authorized: true });
     }
   }
@@ -255,10 +272,11 @@ class Main extends Component {
           handleCreateSlide={this.handleCreateSlide}
           handleSignOut={this.handleSignOut}
           handleRefreshSlide={this.handleRefreshSlide}
-          handleGetInfo={this.handleGetInfo}
-          handleDialog={this.handleDialog}
-          handleArrangeDialog={this.handleArrangeDialog}
-          handleResetDialog={this.handleResetDialog}
+          handleGetPresentationInfo={this.handleGetPresentationInfo}
+          handleDialogOpen={this.handleDialogOpen}
+          handleArrangeDialogOpen={this.handleArrangeDialogOpen}
+          handleResetDialogOpen={this.handleResetDialogOpen}
+          presentation={this.state.presentation}
         />
         <Tree data={this.state.presentation} />
         <Dialog
@@ -274,14 +292,14 @@ class Main extends Component {
             slideId={this.state.slideId}
             elementId={this.state.elementId}
             elementInfo={this.state.element}
-            handleMove={this.handleMoveElement}
+            handleMoveElementProperty={this.handleMoveElementProperty}
           />
         </Dialog>
         <Dialog
           buttonLabel={'Arrange'}
           title={'Arrange Elements'}
           handleCancel={this.handleArrangeDialogCancel}
-          handleMove={this.handleArrangeDialogArrange}
+          handleMove={this.handleArrangeDialogDo}
           modal={this.state.arrangeModal}
         >
           <ArrangeForm
@@ -297,7 +315,7 @@ class Main extends Component {
           buttonLabel={'Reset Size'}
           title={'Reset Element Sizes'}
           handleCancel={this.handleResetDialogCancel}
-          handleMove={this.handleResetDialogReset}
+          handleMove={this.handleResetDialogDo}
           modal={this.state.resetModal}
         >
           <ArrangeForm

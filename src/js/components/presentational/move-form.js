@@ -16,7 +16,12 @@ const elements = ({ slideId, presentation }) => {
   });
 };
 
-const showElement = ({ slideId, elementId, elementInfo, handleMove }) => {
+const showElement = ({
+  slideId,
+  elementId,
+  elementInfo,
+  handleMoveElementProperty,
+}) => {
   return (
     <FormGroup>
       <Row>
@@ -45,7 +50,12 @@ const showElement = ({ slideId, elementId, elementInfo, handleMove }) => {
       <Row>
         <Col>Unit</Col>
         <Col>
-          <Input onChange={handleMove} type="select" name="unit" id="unit">
+          <Input
+            onChange={handleMoveElementProperty}
+            type="select"
+            name="unit"
+            id="unit"
+          >
             <option value="EMU">EMU</option>
             <option value="PT">PT</option>
             <option value="PX">PX</option>
@@ -63,7 +73,7 @@ const showElement = ({ slideId, elementId, elementInfo, handleMove }) => {
             name="scaleX"
             id="scaleX"
             value={elementInfo.UI.scaleX || 0}
-            onChange={handleMove}
+            onChange={handleMoveElementProperty}
           />
         </Col>
       </Row>
@@ -75,7 +85,7 @@ const showElement = ({ slideId, elementId, elementInfo, handleMove }) => {
             name="scaleY"
             id="scaleY"
             value={elementInfo.UI.scaleY || 0}
-            onChange={handleMove}
+            onChange={handleMoveElementProperty}
           />
         </Col>
       </Row>
@@ -87,7 +97,7 @@ const showElement = ({ slideId, elementId, elementInfo, handleMove }) => {
             name="translateX"
             id="translateX"
             value={elementInfo.UI.translateX || 0}
-            onChange={handleMove}
+            onChange={handleMoveElementProperty}
           />
         </Col>
       </Row>
@@ -99,7 +109,7 @@ const showElement = ({ slideId, elementId, elementInfo, handleMove }) => {
             name="translateY"
             id="translateY"
             value={elementInfo.UI.translateY || 0}
-            onChange={handleMove}
+            onChange={handleMoveElementProperty}
           />
         </Col>
       </Row>
@@ -111,7 +121,7 @@ const showElement = ({ slideId, elementId, elementInfo, handleMove }) => {
             name="shearX"
             id="shearX"
             value={elementInfo.UI.shearX || 0}
-            onChange={handleMove}
+            onChange={handleMoveElementProperty}
           />
         </Col>
       </Row>
@@ -123,7 +133,7 @@ const showElement = ({ slideId, elementId, elementInfo, handleMove }) => {
             name="shearY"
             id="shearY"
             value={elementInfo.UI.shearY || 0}
-            onChange={handleMove}
+            onChange={handleMoveElementProperty}
           />
         </Col>
       </Row>
@@ -138,7 +148,7 @@ const MoveForm = ({
   pickSlide,
   pickElement,
   elementInfo,
-  handleMove,
+  handleMoveElementProperty,
 }) => {
   const slides = presentation.slides.map(slide => slide.objectId);
 
@@ -170,7 +180,12 @@ const MoveForm = ({
       ) : null}
 
       {slideId && elementId && elementInfo
-        ? showElement({ slideId, elementId, elementInfo, handleMove })
+        ? showElement({
+            slideId,
+            elementId,
+            elementInfo,
+            handleMoveElementProperty,
+          })
         : null}
     </Form>
   );
