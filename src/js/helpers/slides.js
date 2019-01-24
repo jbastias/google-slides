@@ -1,19 +1,27 @@
-import { toDataUnit, updatePresentation, makePresObj } from '.';
+import {
+  toDataUnit,
+  updatePresentation,
+  makePresObj,
+  PADDING,
+  CENTER,
+  IMAGE_SCALE,
+  SHAPE_SCALE,
+} from '.';
 
 export function ResetObjectsSizes(presentation, slideId, elements, cb) {
   const p = makePresObj(presentation);
-
   const requests = elements
     .filter(el => el.metadata.type === 'image')
     .map(el => {
       const e = p.el(slideId, el.id);
-      // console.log(p.unitsTable);
       return {
         updatePageElementTransform: {
           objectId: el.id,
           transform: {
-            scaleX: e.elementTypeInfo.type === 'shape' ? 1 : 381,
-            scaleY: e.elementTypeInfo.type === 'shape' ? 1 : 381,
+            scaleX:
+              e.elementTypeInfo.type === 'shape' ? SHAPE_SCALE : IMAGE_SCALE,
+            scaleY:
+              e.elementTypeInfo.type === 'shape' ? SHAPE_SCALE : IMAGE_SCALE,
             shearX: 0,
             shearY: 0,
             translateX: e.translateX < 0 ? 1000000 : e.translateX,
@@ -30,36 +38,28 @@ export function ResetObjectsSizes(presentation, slideId, elements, cb) {
 const newScaleX = (p, e, el, pad) => {
   return (
     toDataUnit(p.unitsTable, 'FRACTION', el.style.w, 'x') / e.width -
-    (el.metadata.type === 'paragraph'
-      ? 0
-      : toDataUnit(p.unitsTable, 'PX', pad, 'x') / e.width)
+    toDataUnit(p.unitsTable, 'PX', pad, 'x') / e.width
   );
 };
 
 const newScaleY = (p, e, el, pad) => {
   return (
     toDataUnit(p.unitsTable, 'FRACTION', el.style.h, 'y') / e.height -
-    (el.metadata.type === 'paragraph'
-      ? 0
-      : toDataUnit(p.unitsTable, 'PX', pad, 'y') / e.height)
+    toDataUnit(p.unitsTable, 'PX', pad, 'y') / e.height
   );
 };
 
 const newTranslateX = (p, el, move) => {
   return (
-    toDataUnit(p.unitsTable, 'FRACTION', el.style.w, 'x') +
-    (el.metadata.type === 'paragraph'
-      ? 0
-      : toDataUnit(p.unitsTable, 'PX', move, 'x'))
+    toDataUnit(p.unitsTable, 'FRACTION', el.style.x, 'x') +
+    toDataUnit(p.unitsTable, 'PX', move, 'x')
   );
 };
 
 const newTranslateY = (p, el, move) => {
   return (
-    toDataUnit(p.unitsTable, 'FRACTION', el.style.w, 'y') +
-    (el.metadata.type === 'paragraph'
-      ? 0
-      : toDataUnit(p.unitsTable, 'PX', move, 'y'))
+    toDataUnit(p.unitsTable, 'FRACTION', el.style.y, 'y') +
+    toDataUnit(p.unitsTable, 'PX', move, 'x')
   );
 };
 
@@ -71,12 +71,12 @@ export function AIMoveObjects(presentation, slideId, elements, cb) {
       updatePageElementTransform: {
         objectId: el.id,
         transform: {
-          scaleX: newScaleX(p, e, el, 50),
-          scaleY: newScaleY(p, e, el, 50),
+          scaleX: newScaleX(p, e, el, PADDING),
+          scaleY: newScaleY(p, e, el, PADDING),
           shearX: 0,
           shearY: 0,
-          translateX: newTranslateX(p, el, 25),
-          translateY: newTranslateY(p, el, 25),
+          translateX: newTranslateX(p, el, CENTER),
+          translateY: newTranslateY(p, el, CENTER),
           unit: 'EMU',
         },
         applyMode: 'ABSOLUTE',

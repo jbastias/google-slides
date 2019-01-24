@@ -85,6 +85,7 @@ class Main extends Component {
 
   handleRefreshSlide() {
     RefreshSlides(this.state.presId, this.handleRefreshPresentaton.bind(this));
+    console.log('slides have been refreshed');
   }
 
   handleRefreshPresentaton(presentation) {

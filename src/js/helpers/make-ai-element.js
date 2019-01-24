@@ -1,4 +1,5 @@
-import { getUnitsTable, toUIUnit, getElementType, makePresObj } from '.';
+import { GRID_CONFIG } from 'evo';
+import { toUIUnit, getElementType, makePresObj, CENTER } from '.';
 
 const CATEGORY_TEXT = 0;
 const CATEGORY_MEDIA = 1;
@@ -39,8 +40,12 @@ const getSize = el => {
 
 const addImageSize = (p, e) => {
   const sizes = {};
-  for (let i = 3; i <= 12; i++) {
-    const w = i / 12;
+  for (
+    let i = GRID_CONFIG[CATEGORY_MEDIA].cols.min;
+    i <= GRID_CONFIG[CATEGORY_MEDIA].cols.size;
+    i++
+  ) {
+    const w = i / GRID_CONFIG[CATEGORY_MEDIA].cols.size;
     const h = ((w * e.height) / e.width) * (p.slideWidth / p.slideHeight);
     sizes[i] = { w, h };
   }
@@ -52,21 +57,13 @@ const createTextDiv = (content, width, slideWidth) => {
   containerDiv.style = `border: solid 0px red; width: ${slideWidth}px; position: absolute;`;
   document.body.append(containerDiv);
   const div = document.createElement('div');
-  div.style = `padding: 20px; border: solid 1px red; width: ${width * 100}%;`;
+  div.style = `padding: ${CENTER}px; border: solid 1px red; width: ${width *
+    100}%;`;
   div.innerHTML = content;
   containerDiv.append(div);
   const rect = div.getBoundingClientRect();
   document.body.removeChild(containerDiv);
   return rect;
-};
-
-const getSlidewidthInPx = presentation => {
-  return toUIUnit(
-    getUnitsTable(presentation),
-    'PX',
-    presentation.pageSize.width.magnitude,
-    'x'
-  );
 };
 
 const getTextStyle = textEl => {
@@ -116,8 +113,12 @@ const createContent = el => {
 const addTextSize = (p, e) => {
   const sizes = {};
 
-  for (let i = 4; i <= 24; i++) {
-    const w = i / 24;
+  for (
+    let i = GRID_CONFIG[CATEGORY_TEXT].cols.min;
+    i <= GRID_CONFIG[CATEGORY_TEXT].cols.size;
+    i++
+  ) {
+    const w = i / GRID_CONFIG[CATEGORY_TEXT].cols.size;
     const rect = createTextDiv(createContent(e.element), w, p.slideWidthInPx);
     const h = rect.height / toUIUnit(p.unitsTable, 'PX', p.slideHeight);
     sizes[i] = { w, h };

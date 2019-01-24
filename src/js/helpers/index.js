@@ -7,3 +7,4 @@ export * from './slide-helpers';
 export * from './slides';
 export * from './units';
 export * from './element-type';
+export * from './constants';
