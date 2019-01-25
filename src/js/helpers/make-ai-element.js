@@ -101,10 +101,15 @@ const createContent = el => {
 
     textEls.forEach((textEl, index) => {
       if (index === 0) return;
-      if (textEl.hasOwnProperty('paragraphMarker')) content = content + '<br>';
+      if (textEl.hasOwnProperty('paragraphMarker'))
+        content = content + '<br><br>';
       if (textEl.hasOwnProperty('textRun'))
         content = content + createSpan(textEl);
     });
+
+    if (textEls.length == 2) {
+      content = content + '<br><br>';
+    }
   }
 
   return content;
